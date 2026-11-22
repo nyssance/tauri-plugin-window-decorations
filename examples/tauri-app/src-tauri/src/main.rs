@@ -2,11 +2,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::WebviewWindow;
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 use tauri_plugin_window_decorations::DecorationStatus;
 use tauri_plugin_window_decorations::WebviewWindowExt;
 
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct E2eDecorationState {
@@ -51,7 +51,7 @@ async fn activate_and_show(window: WebviewWindow) -> Result<&'static str, String
     }
 }
 
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 #[tauri::command]
 fn set_e2e_fullscreen(window: WebviewWindow, fullscreen: bool) -> Result<(), String> {
     window
@@ -59,7 +59,7 @@ fn set_e2e_fullscreen(window: WebviewWindow, fullscreen: bool) -> Result<(), Str
         .map_err(|error| error.to_string())
 }
 
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 #[tauri::command]
 fn e2e_decoration_state(window: WebviewWindow) -> Result<E2eDecorationState, String> {
     let lifecycle = match window.decoration_status().map_err(|error| error.to_string())? {
@@ -77,7 +77,7 @@ fn e2e_decoration_state(window: WebviewWindow) -> Result<E2eDecorationState, Str
     })
 }
 
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 #[tauri::command]
 fn e2e_window_state(window: WebviewWindow) -> Result<(bool, bool), String> {
     Ok((
@@ -90,10 +90,10 @@ fn e2e_window_state(window: WebviewWindow) -> Result<(bool, bool), String> {
     ))
 }
 
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 type E2eWindowMetrics = (i32, i32, u32, u32, f64, bool, bool);
 
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 #[tauri::command]
 fn e2e_window_metrics(window: WebviewWindow) -> Result<E2eWindowMetrics, String> {
     let position = window
@@ -111,13 +111,13 @@ fn e2e_window_metrics(window: WebviewWindow) -> Result<E2eWindowMetrics, String>
     ))
 }
 
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 #[tauri::command]
 fn e2e_minimize(window: WebviewWindow) -> Result<(), String> {
     window.minimize().map_err(|error| error.to_string())
 }
 
-#[cfg(feature = "e2e-wdio")]
+#[cfg(target_os = "none")]
 #[tauri::command]
 fn e2e_unminimize(window: WebviewWindow) -> Result<(), String> {
     window.unminimize().map_err(|error| error.to_string())
@@ -126,13 +126,13 @@ fn e2e_unminimize(window: WebviewWindow) -> Result<(), String> {
 fn main() -> Result<(), tauri::Error> {
     let builder = tauri::Builder::default().plugin(tauri_plugin_window_decorations::init());
 
-    #[cfg(feature = "e2e-wdio")]
+    #[cfg(target_os = "none")]
     let builder = builder.plugin(tauri_plugin_wdio::init());
 
-    #[cfg(feature = "e2e-wdio")]
+    #[cfg(target_os = "none")]
     let builder = builder.plugin(tauri_plugin_wdio_webdriver::init());
 
-    #[cfg(feature = "e2e-wdio")]
+    #[cfg(target_os = "none")]
     let builder = builder.invoke_handler(tauri::generate_handler![
         activate_and_show,
         e2e_decoration_state,
@@ -142,7 +142,7 @@ fn main() -> Result<(), tauri::Error> {
         e2e_window_state,
         set_e2e_fullscreen
     ]);
-    #[cfg(not(feature = "e2e-wdio"))]
+    #[cfg(not(target_os = "none"))]
     let builder = builder.invoke_handler(tauri::generate_handler![activate_and_show]);
 
     builder

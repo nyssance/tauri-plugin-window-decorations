@@ -21,7 +21,7 @@ pnpm --filter tauri-app build
 pnpm example:dev
 ```
 
-The example requires Tauri 2.10 or later, Node.js 24, and pnpm 11.18.0.
+The example requires Tauri 3 or later, Node.js 24, and pnpm 11.18.0.
 
 ## Run its tests
 

@@ -7,7 +7,7 @@ Application developers normally need only the [integration guide](integration.md
 
 Install:
 
-- Rust 1.88 or later
+- Rust 1.95 or later
 - Node.js 24
 - pnpm 11.18.0
 - the platform prerequisites required by Tauri

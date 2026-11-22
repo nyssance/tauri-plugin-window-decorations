@@ -1,7 +1,7 @@
 # Integration guide
 
 This guide shows the supported application setup for
-`tauri-plugin-window-decorations` 3.0.5. It assumes Tauri 2.10 or later and Rust 1.88
+`tauri-plugin-window-decorations` 3.0.5. It assumes Tauri 3 or later and Rust 1.95
 or later.
 
 The example uses one window named `main`. Repeat the capability and activation
@@ -13,7 +13,7 @@ Add the crate beside Tauri in `src-tauri/Cargo.toml`:
 
 ```toml
 [dependencies]
-tauri = "2.10.0"
+tauri = "3.0.0-alpha.6"
 tauri-plugin-window-decorations = "3.0.5"
 ```
 

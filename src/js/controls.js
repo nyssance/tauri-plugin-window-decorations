@@ -9,8 +9,8 @@
       Array.isArray(context.config.controls) ? context.config.controls : [],
     );
     const host = document.createElement("div");
-    host.setAttribute("data-tauri-decoration-controls", "");
-    host.setAttribute("data-tauri-decoration-platform", "windows");
+    host.setAttribute("data-tauri-window-decorations-controls", "");
+    host.setAttribute("data-tauri-window-decorations-platform", "windows");
     host.setAttribute("role", "group");
     host.setAttribute("aria-label", "Window controls");
     context.root.appendChild(host);
@@ -24,9 +24,9 @@
       activeControl = buttons.has(control) ? control : null;
       for (const [name, button] of buttons) {
         if (name === activeControl) {
-          button.setAttribute("data-tauri-decoration-hover", "");
+          button.setAttribute("data-tauri-window-decorations-hover", "");
         } else {
-          button.removeAttribute("data-tauri-decoration-hover");
+          button.removeAttribute("data-tauri-window-decorations-hover");
         }
       }
     };
@@ -34,7 +34,7 @@
     const createButton = (name, label, glyph, action) => {
       const button = document.createElement("button");
       button.setAttribute("type", "button");
-      button.setAttribute("data-tauri-decoration-control", name);
+      button.setAttribute("data-tauri-window-decorations-control", name);
       button.setAttribute("aria-label", label);
       button.textContent = glyph;
 
@@ -407,10 +407,10 @@
     const renderFullscreen = (value) => {
       fullscreen = Boolean(value);
       if (fullscreen) {
-        context.root.setAttribute("data-tauri-decoration-fullscreen", "");
+        context.root.setAttribute("data-tauri-window-decorations-fullscreen", "");
         setActive(null);
       } else {
-        context.root.removeAttribute("data-tauri-decoration-fullscreen");
+        context.root.removeAttribute("data-tauri-window-decorations-fullscreen");
       }
       publishClearance();
     };

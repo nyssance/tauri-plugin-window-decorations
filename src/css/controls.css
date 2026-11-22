@@ -20,11 +20,11 @@
   display: block;
 }
 
-[data-tauri-plugin-window-decorations-root][data-tauri-decoration-fullscreen] {
+[data-tauri-plugin-window-decorations-root][data-tauri-window-decorations-fullscreen] {
   display: none;
 }
 
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-controls] {
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-controls] {
   position: absolute;
   top: 0;
   z-index: 1;
@@ -34,16 +34,16 @@
   pointer-events: auto;
 }
 
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-side="left"] {
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-side="left"] {
   left: 0;
 }
 
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-side="right"],
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-platform="windows"] {
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-side="right"],
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-platform="windows"] {
   right: 0;
 }
 
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-control] {
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-control] {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -63,21 +63,21 @@
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-platform="windows"]
-  [data-tauri-decoration-control] {
+  [data-tauri-window-decorations-platform="windows"]
+  [data-tauri-window-decorations-control] {
   width: 58px;
   font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
   font-size: 10px;
 }
 
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-platform="linux"] {
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-platform="linux"] {
   gap: 6px;
   padding-inline: 8px;
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-platform="linux"]
-  [data-tauri-decoration-control] {
+  [data-tauri-window-decorations-platform="linux"]
+  [data-tauri-window-decorations-control] {
   width: 32px;
   border-radius: 999px;
   background: var(
@@ -86,15 +86,15 @@
   );
 }
 
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-control]:hover,
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-control]:hover,
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-control][data-tauri-decoration-hover] {
+  [data-tauri-window-decorations-control][data-tauri-window-decorations-hover] {
   background: rgba(0, 0, 0, 0.1);
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-platform="linux"]
-  [data-tauri-decoration-control]:hover {
+  [data-tauri-window-decorations-platform="linux"]
+  [data-tauri-window-decorations-control]:hover {
   background: var(
     --decoration-tb-actions-icon-active-bg,
     rgba(0, 0, 0, 0.32)
@@ -102,33 +102,33 @@
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-control="close"]:hover,
+  [data-tauri-window-decorations-control="close"]:hover,
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-control="close"][data-tauri-decoration-hover] {
+  [data-tauri-window-decorations-control="close"][data-tauri-window-decorations-hover] {
   color: #fff;
   background: #c42b1c;
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-control]:focus-visible {
+  [data-tauri-window-decorations-control]:focus-visible {
   outline: 2px solid Highlight;
   outline-offset: -3px;
 }
 
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-control] img {
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-control] img {
   width: 16px;
   height: 16px;
   pointer-events: none;
 }
 
-[data-tauri-plugin-window-decorations-root] [data-tauri-decoration-icon-fallback] img {
+[data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-icon-fallback] img {
   display: none;
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon]::before,
+  [data-tauri-window-decorations-icon]::before,
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon]::after {
+  [data-tauri-window-decorations-icon]::after {
   position: absolute;
   box-sizing: border-box;
   display: none;
@@ -139,77 +139,77 @@
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon-fallback]::before,
+  [data-tauri-window-decorations-icon-fallback]::before,
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon-fallback]::after {
+  [data-tauri-window-decorations-icon-fallback]::after {
   display: block;
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="minimize"]::before {
+  [data-tauri-window-decorations-icon="minimize"]::before {
   top: 16px;
   height: 0;
   border-top: 1.5px solid;
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="maximize"]::before {
+  [data-tauri-window-decorations-icon="maximize"]::before {
   border: 1.5px solid;
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="restore"]::before,
+  [data-tauri-window-decorations-icon="restore"]::before,
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="restore"]::after {
+  [data-tauri-window-decorations-icon="restore"]::after {
   width: 8px;
   height: 8px;
   border: 1.5px solid;
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="restore"]::before {
+  [data-tauri-window-decorations-icon="restore"]::before {
   transform: translate(2px, -2px);
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="restore"]::after {
+  [data-tauri-window-decorations-icon="restore"]::after {
   background: inherit;
   transform: translate(-2px, 2px);
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="close"]::before,
+  [data-tauri-window-decorations-icon="close"]::before,
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="close"]::after {
+  [data-tauri-window-decorations-icon="close"]::after {
   top: 15px;
   height: 0;
   border-top: 1.5px solid;
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="close"]::before {
+  [data-tauri-window-decorations-icon="close"]::before {
   transform: rotate(45deg);
 }
 
 [data-tauri-plugin-window-decorations-root]
-  [data-tauri-decoration-icon="close"]::after {
+  [data-tauri-window-decorations-icon="close"]::after {
   transform: rotate(-45deg);
 }
 
 @media (prefers-color-scheme: dark) {
-  [data-tauri-plugin-window-decorations-root] [data-tauri-decoration-control] {
+  [data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-control] {
     color: #f5f5f5;
   }
 
-  [data-tauri-plugin-window-decorations-root] [data-tauri-decoration-control]:hover,
+  [data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-control]:hover,
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-control][data-tauri-decoration-hover] {
+    [data-tauri-window-decorations-control][data-tauri-window-decorations-hover] {
     background: rgba(255, 255, 255, 0.1);
   }
 
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-platform="linux"]
-    [data-tauri-decoration-control] {
+    [data-tauri-window-decorations-platform="linux"]
+    [data-tauri-window-decorations-control] {
     background: var(
       --decoration-tb-actions-icon-bg,
       rgba(255, 255, 255, 0.18)
@@ -217,8 +217,8 @@
   }
 
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-platform="linux"]
-    [data-tauri-decoration-control]:hover {
+    [data-tauri-window-decorations-platform="linux"]
+    [data-tauri-window-decorations-control]:hover {
     background: var(
       --decoration-tb-actions-icon-active-bg,
       rgba(255, 255, 255, 0.32)
@@ -228,8 +228,8 @@
 
 @supports (color: color-mix(in srgb, black 50%, transparent)) {
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-platform="linux"]
-    [data-tauri-decoration-control] {
+    [data-tauri-window-decorations-platform="linux"]
+    [data-tauri-window-decorations-control] {
     background: var(
       --decoration-tb-actions-icon-bg,
       color-mix(in srgb, CanvasText 18%, transparent)
@@ -237,8 +237,8 @@
   }
 
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-platform="linux"]
-    [data-tauri-decoration-control]:hover {
+    [data-tauri-window-decorations-platform="linux"]
+    [data-tauri-window-decorations-control]:hover {
     background: var(
       --decoration-tb-actions-icon-active-bg,
       color-mix(in srgb, CanvasText 32%, transparent)
@@ -247,10 +247,10 @@
 }
 
 @media (forced-colors: active) {
-  [data-tauri-plugin-window-decorations-root] [data-tauri-decoration-control],
+  [data-tauri-plugin-window-decorations-root] [data-tauri-window-decorations-control],
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-platform="linux"]
-    [data-tauri-decoration-control] {
+    [data-tauri-window-decorations-platform="linux"]
+    [data-tauri-window-decorations-control] {
     color: ButtonText;
     border: 1px solid ButtonText;
     background: ButtonFace;
@@ -258,24 +258,24 @@
   }
 
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-control]:focus-visible {
+    [data-tauri-window-decorations-control]:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 1px;
   }
 
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-platform="linux"]
-    [data-tauri-decoration-control]
+    [data-tauri-window-decorations-platform="linux"]
+    [data-tauri-window-decorations-control]
     img {
     display: none;
   }
 
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-platform="linux"]
-    [data-tauri-decoration-icon]::before,
+    [data-tauri-window-decorations-platform="linux"]
+    [data-tauri-window-decorations-icon]::before,
   [data-tauri-plugin-window-decorations-root]
-    [data-tauri-decoration-platform="linux"]
-    [data-tauri-decoration-icon]::after {
+    [data-tauri-window-decorations-platform="linux"]
+    [data-tauri-window-decorations-icon]::after {
     display: block;
   }
 }

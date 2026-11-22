@@ -30,10 +30,10 @@ metadata = json.load(sys.stdin)
 versions = [
     package["version"]
     for package in metadata["packages"]
-    if package["name"] == "tauri-plugin-decoration"
+    if package["name"] == "tauri-plugin-window-decorations"
 ]
 if len(versions) != 1:
-    raise SystemExit("expected exactly one tauri-plugin-decoration package")
+    raise SystemExit("expected exactly one tauri-plugin-window-decorations package")
 print(versions[0])
 '
 )"

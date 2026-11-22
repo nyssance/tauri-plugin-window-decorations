@@ -7,11 +7,11 @@
   const STYLESHEET_SELECTOR =
     'link[data-tauri-plugin-window-decorations-stylesheet="v1"]';
   const READY_PROPERTY = "--tauri-plugin-window-decorations-ready";
-  const ACK_COMMAND = "plugin:decoration|frontend_ack";
-  const DOCUMENT_BOOT_COMMAND = "plugin:decoration|frontend_document_boot";
-  const DOCUMENT_READY_COMMAND = "plugin:decoration|frontend_document_ready";
-  const GEOMETRY_COMMAND = "plugin:decoration|frontend_geometry";
-  const WINDOW_CONTROL_COMMAND = "plugin:decoration|window_control";
+  const ACK_COMMAND = "plugin:window-decorations|frontend_ack";
+  const DOCUMENT_BOOT_COMMAND = "plugin:window-decorations|frontend_document_boot";
+  const DOCUMENT_READY_COMMAND = "plugin:window-decorations|frontend_document_ready";
+  const GEOMETRY_COMMAND = "plugin:window-decorations|frontend_geometry";
+  const WINDOW_CONTROL_COMMAND = "plugin:window-decorations|window_control";
   const STYLESHEET_TIMEOUT_MS = 4000;
   const DOCUMENT_RETRY_DELAYS_MS = [32, 128, 512, 1024];
   const CLOSED_EVENTS = new Set([
@@ -672,9 +672,9 @@
         return false;
       }
       if (state.fullscreen) {
-        context.root.setAttribute("data-tauri-decoration-fullscreen", "");
+        context.root.setAttribute("data-tauri-window-decorations-fullscreen", "");
       } else {
-        context.root.removeAttribute("data-tauri-decoration-fullscreen");
+        context.root.removeAttribute("data-tauri-window-decorations-fullscreen");
       }
       return publishClearance(state.fullscreen ? 0 : state.clearance);
     };

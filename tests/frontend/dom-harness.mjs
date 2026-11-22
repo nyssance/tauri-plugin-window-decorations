@@ -182,7 +182,7 @@ class HarnessElement extends HarnessEventTarget {
       rectangle.y ??= rectangle.top;
       return rectangle;
     }
-    if (this.hasAttribute("data-tauri-plugin-decoration-root")) {
+    if (this.hasAttribute("data-tauri-plugin-window-decorations-root")) {
       return {
         bottom: 32,
         height: 32,
@@ -194,17 +194,17 @@ class HarnessElement extends HarnessEventTarget {
         y: 0,
       };
     }
-    const control = this.getAttribute("data-tauri-decoration-control");
-    const controlHost = this.hasAttribute("data-tauri-decoration-controls");
+    const control = this.getAttribute("data-tauri-window-decorations-control");
+    const controlHost = this.hasAttribute("data-tauri-window-decorations-controls");
     const platform = controlHost
-      ? this.getAttribute("data-tauri-decoration-platform")
-      : this.parentNode?.getAttribute?.("data-tauri-decoration-platform");
+      ? this.getAttribute("data-tauri-window-decorations-platform")
+      : this.parentNode?.getAttribute?.("data-tauri-window-decorations-platform");
     const controls = this.parentNode?.children?.filter?.((child) =>
-      child.hasAttribute("data-tauri-decoration-control"),
+      child.hasAttribute("data-tauri-window-decorations-control"),
     );
     const hostControls = controlHost
       ? this.children.filter((child) =>
-          child.hasAttribute("data-tauri-decoration-control"),
+          child.hasAttribute("data-tauri-window-decorations-control"),
         )
       : controls;
     const index = controls?.indexOf(this) ?? 0;
@@ -218,8 +218,8 @@ class HarnessElement extends HarnessEventTarget {
         : count * controlWidth;
     const width = control ? controlWidth : controlHost ? hostWidth : 0;
     const side = controlHost
-      ? this.getAttribute("data-tauri-decoration-side")
-      : this.parentNode?.getAttribute?.("data-tauri-decoration-side");
+      ? this.getAttribute("data-tauri-window-decorations-side")
+      : this.parentNode?.getAttribute?.("data-tauri-window-decorations-side");
     const hostLeft = side === "left" ? 0 : 800 - hostWidth;
     const left = control
       ? hostLeft + index * controlWidth

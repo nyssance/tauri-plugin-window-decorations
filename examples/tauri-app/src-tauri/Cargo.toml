@@ -2,26 +2,18 @@
 name = "tauri-app"
 version = "0.0.0"
 description = "Single-window example for tauri-plugin-window-decorations"
-authors = ["oovz"]
+authors = ["nyssance"]
 license = "MIT"
-repository = "https://github.com/oovz/tauri-plugin-window-decorations"
+repository = "https://github.com/nyssance/tauri-plugin-window-decorations"
 edition = "2021"
-rust-version = "1.88"
+rust-version = "1.95"
 
 [features]
 default = []
-e2e-wdio = [
-    "dep:serde",
-    "dep:tauri-plugin-wdio",
-    "dep:tauri-plugin-wdio-webdriver",
-]
 
 [build-dependencies]
-tauri-build = { version = "=2.5.5", default-features = false, features = [] }
+tauri-build = { version = "=3.0.0-alpha.4", default-features = false }
 
 [dependencies]
-tauri = { version = "=2.10.0", default-features = false, features = ["wry"] }
+tauri = { version = "=3.0.0-alpha.6", default-features = false }
 tauri-plugin-window-decorations = { path = "../../../" }
-serde = { version = "1.0", features = ["derive"], optional = true }
-tauri-plugin-wdio = { version = "=1.2.0", optional = true }
-tauri-plugin-wdio-webdriver = { version = "=1.2.0", optional = true }

@@ -17,9 +17,9 @@
 
     const createHost = (side) => {
       const host = document.createElement("div");
-      host.setAttribute("data-tauri-decoration-controls", "");
-      host.setAttribute("data-tauri-decoration-platform", "linux");
-      host.setAttribute("data-tauri-decoration-side", side);
+      host.setAttribute("data-tauri-window-decorations-controls", "");
+      host.setAttribute("data-tauri-window-decorations-platform", "linux");
+      host.setAttribute("data-tauri-window-decorations-side", side);
       host.setAttribute("role", "group");
       host.setAttribute("aria-label", "Window controls");
       context.root.appendChild(host);
@@ -31,19 +31,19 @@
       const state = { actionLocked: false };
       const button = document.createElement("button");
       button.setAttribute("type", "button");
-      button.setAttribute("data-tauri-decoration-control", name);
-      button.setAttribute("data-tauri-decoration-icon", name);
+      button.setAttribute("data-tauri-window-decorations-control", name);
+      button.setAttribute("data-tauri-window-decorations-icon", name);
       button.setAttribute("aria-label", label);
       const image = document.createElement("img");
       image.setAttribute("alt", "");
       image.setAttribute("aria-hidden", "true");
       const source = pngDataUrl(config.icons[name]);
       if (source) image.setAttribute("src", source);
-      else button.setAttribute("data-tauri-decoration-icon-fallback", "");
+      else button.setAttribute("data-tauri-window-decorations-icon-fallback", "");
       image.addEventListener("error", () => {
         if (!context.isCurrent()) return;
         image.removeAttribute("src");
-        button.setAttribute("data-tauri-decoration-icon-fallback", "");
+        button.setAttribute("data-tauri-window-decorations-icon-fallback", "");
       });
       button.appendChild(image);
 
@@ -71,17 +71,17 @@
       if (!maximize) return;
       const icon = maximized ? "restore" : "maximize";
       const source = pngDataUrl(config.icons[icon]);
-      maximize.button.setAttribute("data-tauri-decoration-icon", icon);
+      maximize.button.setAttribute("data-tauri-window-decorations-icon", icon);
       maximize.button.setAttribute(
         "aria-label",
         maximized ? "Restore window size" : "Maximize window size",
       );
       if (source) {
         maximize.image.setAttribute("src", source);
-        maximize.button.removeAttribute("data-tauri-decoration-icon-fallback");
+        maximize.button.removeAttribute("data-tauri-window-decorations-icon-fallback");
       } else {
         maximize.image.removeAttribute("src");
-        maximize.button.setAttribute("data-tauri-decoration-icon-fallback", "");
+        maximize.button.setAttribute("data-tauri-window-decorations-icon-fallback", "");
       }
     };
 
@@ -98,9 +98,9 @@
     const renderFullscreen = (value) => {
       fullscreen = Boolean(value);
       if (fullscreen) {
-        context.root.setAttribute("data-tauri-decoration-fullscreen", "");
+        context.root.setAttribute("data-tauri-window-decorations-fullscreen", "");
       } else {
-        context.root.removeAttribute("data-tauri-decoration-fullscreen");
+        context.root.removeAttribute("data-tauri-window-decorations-fullscreen");
       }
       publishClearances();
     };

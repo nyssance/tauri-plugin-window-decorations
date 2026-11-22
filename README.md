@@ -12,21 +12,19 @@ companion npm package.
 
 ## Platform support
 
+This first release targets Windows only.
+
 | Platform | Behavior | Support level |
 | --- | --- | --- |
-| Windows 11 | HTML controls with a native Snap Layout hit target | Supported |
-| Windows 10 | HTML window controls | Supported |
-| macOS | Native AppKit traffic lights over application content | Supported |
-| Linux | GTK-themed HTML controls on Wayland | Best effort |
+| Windows 11 | Custom titlebar, native controls, and Snap Layout | Supported |
+| Windows 10 | Custom titlebar and native window controls | Supported |
 
-Linux releases use Ubuntu 24.04 LTS on x86_64 with GNOME Wayland/Mutter as the
-reference profile. X11 is not supported. See [platform support](docs/platforms.md)
-for backend, architecture, and testing details.
+Windows 11 Snap Layout is enabled through the native Windows API. Windows 10
+uses the same controls and normal maximize behavior because Snap Layout is a
+Windows 11 feature. macOS and Linux are intentionally outside this crate's
+release contract.
 
-Version 3.0.5 requires:
-
-- Tauri 2.10 or a later compatible Tauri v3 release
-- Rust 1.88 or newer
+Tauri 3 and Rust 1.95 or newer are required.
 
 ## Get started
 
@@ -36,8 +34,8 @@ Add both dependencies to the Tauri application's `Cargo.toml`:
 
 ```toml
 [dependencies]
-tauri = "2.10.0"
-tauri-plugin-window-decorations = "3.0.5"
+tauri = "3.0.0-alpha.6"
+tauri-plugin-window-decorations = "0.1.0"
 ```
 
 Register the plugin before Tauri creates any webviews:
@@ -158,5 +156,5 @@ runtime dependencies of applications that use the crate.
 - [Migration guide](docs/migration.md): upgrading from 2.x and early 3.0 releases
 - [Development guide](docs/development.md): repository setup, tests, native E2E,
   and package checks
-- [Example application](https://github.com/oovz/tauri-plugin-window-decorations/tree/main/examples/tauri-app):
+- [Example application](https://github.com/nyssance/tauri-plugin-window-decorations/tree/main/examples/tauri-app):
   a runnable integration

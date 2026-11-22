@@ -28,17 +28,17 @@ function createHarness({
   const acknowledgements = [];
   const bootAnnouncements = [];
   const invoke = spy(async (command, args) => {
-    if (command === "plugin:decoration|frontend_document_boot") {
+    if (command === "plugin:window-decorations|frontend_document_boot") {
       bootAnnouncements.push({ command, args });
       invoke.calls.pop();
     } else {
       acknowledgements.push({ command, args });
     }
     const result = await invokeImpl?.(command, args);
-    if (command === "plugin:decoration|frontend_document_boot" && result === undefined) {
+    if (command === "plugin:window-decorations|frontend_document_boot" && result === undefined) {
       return { status: "registered", documentLease: "1" };
     }
-    return command === "plugin:decoration|frontend_geometry" && result === undefined
+    return command === "plugin:window-decorations|frontend_geometry" && result === undefined
       ? { applied: true, cursor: args.snapGeometry.sequence }
       : result;
   });
@@ -52,14 +52,14 @@ function createHarness({
 
   window.__TAURI_INTERNALS__ = {
     convertFileSrc: spy(
-      () => "tauri-plugin-decoration://localhost/controls.css",
+      () => "tauri-plugin-window-decorations://localhost/controls.css",
     ),
     invoke,
   };
   window.__TAURI__ = { window: { getCurrentWindow: () => windowApi } };
   window.getComputedStyle = () => ({
     getPropertyValue: (name) =>
-      name === "--tauri-plugin-decoration-ready" && sentinelReady ? "ready" : "",
+      name === "--tauri-plugin-window-decorations-ready" && sentinelReady ? "ready" : "",
   });
 
   if (inboxLease !== null) {
@@ -91,7 +91,7 @@ function createHarness({
 async function stylesheetLink(window) {
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const link = window.document.querySelector(
-      "link[data-tauri-plugin-decoration-stylesheet]",
+      "link[data-tauri-plugin-window-decorations-stylesheet]",
     );
     if (link) return link;
     await Promise.resolve();
@@ -178,7 +178,7 @@ async function loadStylesheet(harness, installed = true) {
   await waitForCondition(
     () =>
       harness.window.document.querySelector(
-        "[data-tauri-plugin-decoration-active]",
+        "[data-tauri-plugin-window-decorations-active]",
       ) !== null,
     "decoration did not become active",
   );
@@ -205,7 +205,7 @@ describe("embedded decoration runtime", () => {
       () =>
         harness.acknowledgements.some(
           ({ command }) =>
-            command === "plugin:decoration|frontend_document_ready",
+            command === "plugin:window-decorations|frontend_document_ready",
         ),
       "the live document did not announce readiness",
     );
@@ -266,7 +266,7 @@ describe("embedded decoration runtime", () => {
       clearTimeoutImpl: timers.clearTimeoutImpl,
       setTimeoutImpl: timers.setTimeoutImpl,
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_document_boot") return undefined;
+        if (command !== "plugin:window-decorations|frontend_document_boot") return undefined;
         attempts += 1;
         return attempts === 1
           ? Promise.reject(new Error("boot unavailable"))
@@ -291,7 +291,7 @@ describe("embedded decoration runtime", () => {
     });
     const harness = createHarness({
       invokeImpl(command) {
-        return command === "plugin:decoration|frontend_document_boot"
+        return command === "plugin:window-decorations|frontend_document_boot"
           ? bootResponse
           : undefined;
       },
@@ -317,7 +317,7 @@ describe("embedded decoration runtime", () => {
       clearTimeoutImpl: timers.clearTimeoutImpl,
       setTimeoutImpl: timers.setTimeoutImpl,
       invokeImpl(command) {
-        if (command === "plugin:decoration|frontend_document_boot") {
+        if (command === "plugin:window-decorations|frontend_document_boot") {
           return {
             status: "accepted",
             challenge: {
@@ -328,7 +328,7 @@ describe("embedded decoration runtime", () => {
             },
           };
         }
-        if (command === "plugin:decoration|frontend_document_ready") {
+        if (command === "plugin:window-decorations|frontend_document_ready") {
           readyAttempts += 1;
           return readyAttempts === 1
             ? Promise.reject(new Error("readiness unavailable"))
@@ -361,7 +361,7 @@ describe("embedded decoration runtime", () => {
     let readyAttempts = 0;
     const harness = createHarness({
       invokeImpl(command) {
-        if (command === "plugin:decoration|frontend_document_boot") {
+        if (command === "plugin:window-decorations|frontend_document_boot") {
           return {
             status: "accepted",
             challenge: {
@@ -372,7 +372,7 @@ describe("embedded decoration runtime", () => {
             },
           };
         }
-        if (command === "plugin:decoration|frontend_document_ready") {
+        if (command === "plugin:window-decorations|frontend_document_ready") {
           readyAttempts += 1;
           return readyAttempts === 1 ? new Promise(() => {}) : undefined;
         }
@@ -408,7 +408,7 @@ describe("embedded decoration runtime", () => {
       clearTimeoutImpl: timers.clearTimeoutImpl,
       setTimeoutImpl: timers.setTimeoutImpl,
       invokeImpl(command) {
-        if (command === "plugin:decoration|frontend_document_boot") {
+        if (command === "plugin:window-decorations|frontend_document_boot") {
           return Promise.reject(new Error("boot unavailable"));
         }
         return undefined;
@@ -423,7 +423,7 @@ describe("embedded decoration runtime", () => {
   it("uses the invoking document boot response to challenge readiness", async () => {
     const harness = createHarness({
       invokeImpl(command) {
-        if (command === "plugin:decoration|frontend_document_boot") {
+        if (command === "plugin:window-decorations|frontend_document_boot") {
           return {
             status: "accepted",
             challenge: {
@@ -445,7 +445,7 @@ describe("embedded decoration runtime", () => {
       () =>
         harness.acknowledgements.some(
           ({ command, args }) =>
-            command === "plugin:decoration|frontend_document_ready" &&
+            command === "plugin:window-decorations|frontend_document_ready" &&
             args.documentToken === "9",
         ),
       "the boot response did not challenge the invoking document",
@@ -466,7 +466,7 @@ describe("embedded decoration runtime", () => {
 
     assert.equal(runtime.installForDocument("f".repeat(32), "2", config(9)), false);
     assert.equal(
-      harness.window.document.querySelector("[data-tauri-decoration-root]"),
+      harness.window.document.querySelector("[data-tauri-window-decorations-root]"),
       null,
     );
     await loadStylesheet(
@@ -492,7 +492,7 @@ describe("embedded decoration runtime", () => {
     await loadStylesheet(harness);
     assert.deepEqual(plain(harness.acknowledgements), [
       {
-        command: "plugin:decoration|frontend_ack",
+        command: "plugin:window-decorations|frontend_ack",
         args: {
           windowGeneration: "7",
           documentToken: "11",
@@ -516,7 +516,7 @@ describe("embedded decoration runtime", () => {
     assert.equal(isMaximized.calls.length, 0);
 
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     assert.ok(maximize);
     assert.equal(maximize.getAttribute("type"), "button");
@@ -524,13 +524,13 @@ describe("embedded decoration runtime", () => {
     assert.equal(maximize.textContent, "\uE923");
     assert.equal(
       harness.window.document.documentElement.style.getPropertyValue(
-        "--tauri-plugin-decoration-right-clearance",
+        "--tauri-plugin-window-decorations-right-clearance",
       ),
       "174px",
     );
     assert.ok(
       harness.window.document.querySelector(
-        "[data-tauri-plugin-decoration-active]",
+        "[data-tauri-plugin-window-decorations-active]",
       ),
     );
   });
@@ -542,7 +542,7 @@ describe("embedded decoration runtime", () => {
     });
     const harness = createHarness({
       invokeImpl(command) {
-        return command === "plugin:decoration|frontend_ack"
+        return command === "plugin:window-decorations|frontend_ack"
           ? acknowledgement
           : undefined;
       },
@@ -558,7 +558,7 @@ describe("embedded decoration runtime", () => {
     await waitForCondition(
       () =>
         harness.acknowledgements.some(
-          ({ command }) => command === "plugin:decoration|frontend_ack",
+          ({ command }) => command === "plugin:window-decorations|frontend_ack",
         ),
       "native acknowledgement was not requested",
     );
@@ -569,7 +569,7 @@ describe("embedded decoration runtime", () => {
     await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
     assert.equal(
       harness.acknowledgements.filter(
-        ({ command }) => command === "plugin:decoration|frontend_geometry",
+        ({ command }) => command === "plugin:window-decorations|frontend_geometry",
       ).length,
       0,
     );
@@ -578,14 +578,14 @@ describe("embedded decoration runtime", () => {
     await waitForCondition(
       () =>
         harness.window.document.querySelector(
-          "[data-tauri-plugin-decoration-active]",
+          "[data-tauri-plugin-window-decorations-active]",
         ) !== null,
       "native activation acknowledgement was starved",
     );
     await waitForCondition(
       () =>
         harness.acknowledgements.filter(
-          ({ command }) => command === "plugin:decoration|frontend_geometry",
+          ({ command }) => command === "plugin:window-decorations|frontend_geometry",
         ).length === 1,
       "the cached measurement was not flushed once",
     );
@@ -629,7 +629,7 @@ describe("embedded decoration runtime", () => {
     link.dispatchEvent(new harness.window.Event("error"));
     await waitForCalls(harness.invoke, 1);
     assert.deepEqual(plain(harness.acknowledgements[0]), {
-      command: "plugin:decoration|frontend_ack",
+      command: "plugin:window-decorations|frontend_ack",
       args: {
         windowGeneration: "7",
         documentToken: "12",
@@ -639,7 +639,7 @@ describe("embedded decoration runtime", () => {
       },
     });
     assert.equal(
-      harness.window.document.querySelector("[data-tauri-plugin-decoration-owned]"),
+      harness.window.document.querySelector("[data-tauri-plugin-window-decorations-owned]"),
       null,
     );
   });
@@ -657,7 +657,7 @@ describe("embedded decoration runtime", () => {
     assert.equal(runtime.cancel("7", "13"), false);
     assert.equal(runtime.cancel("7", "14"), true);
     assert.equal(
-      harness.window.document.querySelector("[data-tauri-plugin-decoration-owned]"),
+      harness.window.document.querySelector("[data-tauri-plugin-window-decorations-owned]"),
       null,
     );
   });
@@ -671,17 +671,17 @@ describe("embedded decoration runtime", () => {
     );
     const style = harness.window.document.documentElement.style;
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "174px",
     );
 
     assert.equal(harness.window.__TAURI_PLUGIN_DECORATION__.cancel("7", "15"), true);
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "",
     );
     assert.equal(
-      harness.window.document.querySelector("[data-tauri-plugin-decoration-owned]"),
+      harness.window.document.querySelector("[data-tauri-plugin-window-decorations-owned]"),
       null,
       "restoration must remove the loaded plugin stylesheet as well as the controls",
     );
@@ -708,7 +708,7 @@ describe("embedded decoration runtime", () => {
     assert.equal(harness.acknowledgements[0].args.ok, false);
     assert.equal(
       harness.window.document.querySelector(
-        "link[data-tauri-plugin-decoration-stylesheet]",
+        "link[data-tauri-plugin-window-decorations-stylesheet]",
       ),
       null,
     );
@@ -717,7 +717,7 @@ describe("embedded decoration runtime", () => {
   it("restores the exact application-owned clearance value and priority", async () => {
     const harness = createHarness();
     harness.loadPlatform("windows");
-    const property = "--tauri-plugin-decoration-right-clearance";
+    const property = "--tauri-plugin-window-decorations-right-clearance";
     harness.window.document.documentElement.style.setProperty(
       property,
       "42px",
@@ -753,9 +753,9 @@ describe("embedded decoration runtime", () => {
     link.setAttribute("rel", "stylesheet");
     link.setAttribute(
       "href",
-      "tauri-plugin-decoration://localhost/controls.css",
+      "tauri-plugin-window-decorations://localhost/controls.css",
     );
-    link.setAttribute("data-tauri-plugin-decoration-stylesheet", "v1");
+    link.setAttribute("data-tauri-plugin-window-decorations-stylesheet", "v1");
     harness.window.document.head.appendChild(link);
     harness.setSentinelReady();
 
@@ -777,7 +777,7 @@ describe("embedded decoration runtime", () => {
     const link = harness.window.document.createElement("link");
     link.setAttribute("rel", "stylesheet");
     link.setAttribute("href", "data:text/css,/* application-owned conflict */");
-    link.setAttribute("data-tauri-plugin-decoration-stylesheet", "v1");
+    link.setAttribute("data-tauri-plugin-window-decorations-stylesheet", "v1");
     harness.window.document.head.appendChild(link);
 
     assert.equal(
@@ -787,7 +787,7 @@ describe("embedded decoration runtime", () => {
     await waitForCalls(harness.invoke, 1);
 
     assert.deepEqual(plain(harness.acknowledgements[0]), {
-      command: "plugin:decoration|frontend_ack",
+      command: "plugin:window-decorations|frontend_ack",
       args: {
         windowGeneration: "7",
         documentToken: "14",
@@ -839,7 +839,7 @@ describe("embedded decoration runtime", () => {
 
     assert.equal(
       harness.window.document.querySelector(
-        "[data-tauri-decoration-drag-region]",
+        "[data-tauri-window-decorations-drag-region]",
       ),
       null,
     );
@@ -867,13 +867,13 @@ describe("embedded decoration runtime", () => {
     );
 
     harness.window.document
-      .querySelector('[data-tauri-decoration-control="close"]')
+      .querySelector('[data-tauri-window-decorations-control="close"]')
       .dispatchEvent(new harness.window.Event("click"));
     await waitForCondition(
       () =>
         harness.acknowledgements.some(
           ({ command, args }) =>
-            command === "plugin:decoration|window_control" &&
+            command === "plugin:window-decorations|window_control" &&
             args.action === "close",
         ),
       "the close action did not use the plugin command",
@@ -896,7 +896,7 @@ describe("embedded decoration runtime", () => {
     );
 
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     assert.equal(maximize.getAttribute("aria-label"), "Restore window size");
     assert.equal(
@@ -920,7 +920,7 @@ describe("embedded decoration runtime", () => {
       () =>
         harness.acknowledgements.some(
           ({ command, args }) =>
-            command === "plugin:decoration|window_control" &&
+            command === "plugin:window-decorations|window_control" &&
             args.action === "toggleMaximize",
         ),
       "Snap click did not invoke the plugin window-control command",
@@ -932,7 +932,7 @@ describe("embedded decoration runtime", () => {
     const harness = createHarness({
       invokeImpl: async (command, args) => {
         if (
-          command === "plugin:decoration|window_control" &&
+          command === "plugin:window-decorations|window_control" &&
           args.action === "minimize" &&
           denied
         ) {
@@ -948,7 +948,7 @@ describe("embedded decoration runtime", () => {
     );
 
     const minimize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="minimize"]',
+      '[data-tauri-window-decorations-control="minimize"]',
     );
     minimize.dispatchEvent(new harness.window.Event("click"));
     await waitForCalls(harness.consoleError, 1);
@@ -961,7 +961,7 @@ describe("embedded decoration runtime", () => {
       () =>
         harness.acknowledgements.filter(
           ({ command, args }) =>
-            command === "plugin:decoration|window_control" &&
+            command === "plugin:window-decorations|window_control" &&
             args.action === "minimize",
         ).length === 2,
       "a second minimize request was not sent",
@@ -977,7 +977,7 @@ describe("embedded decoration runtime", () => {
     );
 
     const root = harness.window.document.querySelector(
-      "[data-tauri-plugin-decoration-root]",
+      "[data-tauri-plugin-window-decorations-root]",
     );
     const style = harness.window.document.documentElement.style;
 
@@ -987,9 +987,9 @@ describe("embedded decoration runtime", () => {
       "window-state",
       { maximized: false, fullscreen: true, revision: 1 },
     );
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), "");
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), "");
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "0px",
     );
 
@@ -999,9 +999,9 @@ describe("embedded decoration runtime", () => {
       "window-state",
       { maximized: false, fullscreen: false, revision: 2 },
     );
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), null);
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), null);
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "174px",
     );
     harness.window.__TAURI_PLUGIN_DECORATION__.dispatch(
@@ -1010,7 +1010,7 @@ describe("embedded decoration runtime", () => {
       "window-state",
       { maximized: true, fullscreen: true, revision: 1 },
     );
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), null);
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), null);
   });
 
   it("uses backend-provided Windows fullscreen state when no Snap overlay is installed", async () => {
@@ -1026,12 +1026,12 @@ describe("embedded decoration runtime", () => {
     );
 
     const root = harness.window.document.querySelector(
-      "[data-tauri-plugin-decoration-root]",
+      "[data-tauri-plugin-window-decorations-root]",
     );
     const style = harness.window.document.documentElement.style;
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), "");
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), "");
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "0px",
     );
 
@@ -1041,9 +1041,9 @@ describe("embedded decoration runtime", () => {
       "window-state",
       { maximized: false, fullscreen: false, revision: 1 },
     );
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), null);
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), null);
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "116px",
     );
     assert.equal(isFullscreen.calls.length, 0);
@@ -1059,7 +1059,7 @@ describe("embedded decoration runtime", () => {
     );
 
     const acknowledgement = harness.acknowledgements.find(
-      ({ command }) => command === "plugin:decoration|frontend_ack",
+      ({ command }) => command === "plugin:window-decorations|frontend_ack",
     );
     assert.deepEqual(plain(acknowledgement.args.snapGeometry), {
       kind: "geometry",
@@ -1123,7 +1123,7 @@ describe("embedded decoration runtime", () => {
         );
 
         const update = harness.acknowledgements.find(
-          ({ command }) => command === "plugin:decoration|frontend_ack",
+          ({ command }) => command === "plugin:window-decorations|frontend_ack",
         ).args.snapGeometry;
         const physicalLeft = Math.round(left * scale);
         const physicalRight = Math.round(right * scale);
@@ -1154,11 +1154,11 @@ describe("embedded decoration runtime", () => {
     );
     harness.acknowledgements.length = 0;
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     const updates = () =>
       harness.acknowledgements.filter(
-        ({ command }) => command === "plugin:decoration|frontend_geometry",
+        ({ command }) => command === "plugin:window-decorations|frontend_geometry",
       );
 
     harness.window.flushResizeObservers();
@@ -1198,7 +1198,7 @@ describe("embedded decoration runtime", () => {
     let geometryCalls = 0;
     const harness = createHarness({
       invokeImpl(command, args) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         return geometryCalls === 1
           ? { applied: false, cursor: "1" }
@@ -1215,14 +1215,14 @@ describe("embedded decoration runtime", () => {
     harness.window.flushResizeObservers();
     await waitForCondition(() => geometryCalls === 2, "stale geometry was not retried");
     const sequences = harness.acknowledgements
-      .filter(({ command }) => command === "plugin:decoration|frontend_geometry")
+      .filter(({ command }) => command === "plugin:window-decorations|frontend_geometry")
       .map(({ args }) => args.snapGeometry.sequence);
     assert.deepEqual(sequences, ["2", "2"]);
     await new Promise((resolve) => globalThis.setTimeout(resolve, 25));
     assert.equal(geometryCalls, 2);
 
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     maximize._boundingClientRect = {
       height: 32,
@@ -1236,7 +1236,7 @@ describe("embedded decoration runtime", () => {
       "the post-resync geometry was not delivered",
     );
     const latest = harness.acknowledgements.filter(
-      ({ command }) => command === "plugin:decoration|frontend_geometry",
+      ({ command }) => command === "plugin:window-decorations|frontend_geometry",
     );
     assert.deepEqual(
       latest.map(({ args }) => args.snapGeometry.sequence),
@@ -1269,7 +1269,7 @@ describe("embedded decoration runtime", () => {
 
     assert.equal(
       harness.acknowledgements.filter(
-        ({ command }) => command === "plugin:decoration|frontend_geometry",
+        ({ command }) => command === "plugin:window-decorations|frontend_geometry",
       ).length,
       0,
     );
@@ -1287,7 +1287,7 @@ describe("embedded decoration runtime", () => {
     });
     const harness = createHarness({
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         return geometryCalls === 1 ? firstReport : undefined;
       },
@@ -1299,7 +1299,7 @@ describe("embedded decoration runtime", () => {
     );
     harness.acknowledgements.length = 0;
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     harness.window.flushResizeObservers();
     await waitForCondition(
@@ -1338,7 +1338,7 @@ describe("embedded decoration runtime", () => {
     });
     const harness = createHarness({
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         return geometryCalls === 1 ? firstReport : undefined;
       },
@@ -1358,7 +1358,7 @@ describe("embedded decoration runtime", () => {
       harness.acknowledgements.at(-1).args.snapGeometry,
     );
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     maximize._boundingClientRect = {
       height: 32,
@@ -1374,7 +1374,7 @@ describe("embedded decoration runtime", () => {
     );
     const updates = harness.acknowledgements
       .filter(
-        ({ command }) => command === "plugin:decoration|frontend_geometry",
+        ({ command }) => command === "plugin:window-decorations|frontend_geometry",
       )
       .map(({ args }) => plain(args.snapGeometry));
     assert.deepEqual(updates.slice(0, 2), [firstGeometry, firstGeometry]);
@@ -1388,7 +1388,7 @@ describe("embedded decoration runtime", () => {
     let geometryCalls = 0;
     const harness = createHarness({
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         return geometryCalls === 1 ? firstReport : undefined;
       },
@@ -1420,7 +1420,7 @@ describe("embedded decoration runtime", () => {
     });
     const harness = createHarness({
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         return geometryCalls === 1 ? firstReport : undefined;
       },
@@ -1437,7 +1437,7 @@ describe("embedded decoration runtime", () => {
       "the first geometry state was not sent",
     );
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     maximize._boundingClientRect = {
       height: 0,
@@ -1470,7 +1470,7 @@ describe("embedded decoration runtime", () => {
     });
     const harness = createHarness({
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         return geometryCalls === 1 ? firstReport : undefined;
       },
@@ -1487,7 +1487,7 @@ describe("embedded decoration runtime", () => {
       "the rejected geometry state was not sent",
     );
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     maximize._boundingClientRect = {
       height: 0,
@@ -1510,7 +1510,7 @@ describe("embedded decoration runtime", () => {
       clearTimeoutImpl: fakeTimers.clearTimeoutImpl,
       setTimeoutImpl: fakeTimers.setTimeoutImpl,
       invokeImpl(command, args) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         if (args.snapGeometry.kind === "disabled" && args.snapGeometry.fallback) {
           return undefined;
         }
@@ -1550,7 +1550,7 @@ describe("embedded decoration runtime", () => {
         return fakeTimers.setTimeoutImpl(callback, delay);
       },
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         return Promise.reject(new Error("geometry unavailable"));
       },
     });
@@ -1591,7 +1591,7 @@ describe("embedded decoration runtime", () => {
       clearTimeoutImpl: fakeTimers.clearTimeoutImpl,
       setTimeoutImpl: fakeTimers.setTimeoutImpl,
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         return Promise.reject(new Error("geometry unavailable"));
       },
@@ -1656,7 +1656,7 @@ describe("embedded decoration runtime", () => {
       clearTimeoutImpl,
       setTimeoutImpl,
       invokeImpl(command, args) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         const update = args.snapGeometry;
         if (update.kind === "disabled" && update.fallback) {
           fallbackCalls += 1;
@@ -1697,7 +1697,7 @@ describe("embedded decoration runtime", () => {
     }
 
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     for (let update = 0; update < 5; update += 1) {
       maximize._boundingClientRect = {
@@ -1716,14 +1716,14 @@ describe("embedded decoration runtime", () => {
 
     const fallback = harness.acknowledgements
       .filter(
-        ({ command }) => command === "plugin:decoration|frontend_geometry",
+        ({ command }) => command === "plugin:window-decorations|frontend_geometry",
       )
       .map(({ args }) => args.snapGeometry)
       .find((update) => update.kind === "disabled" && update.fallback);
     assert.ok(fallback, "the threshold failure must publish a fallback disable state");
     const precedingGeometry = harness.acknowledgements
       .filter(
-        ({ command }) => command === "plugin:decoration|frontend_geometry",
+        ({ command }) => command === "plugin:window-decorations|frontend_geometry",
       )
       .map(({ args }) => args.snapGeometry)
       .filter((update) => update.kind === "geometry")
@@ -1741,7 +1741,7 @@ describe("embedded decoration runtime", () => {
       clearTimeoutImpl: fakeTimers.clearTimeoutImpl,
       setTimeoutImpl: fakeTimers.setTimeoutImpl,
       invokeImpl(command, args) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         if (!transportUp) return Promise.reject(new Error("geometry unavailable"));
         const sequence = Number(args.snapGeometry.sequence);
@@ -1811,7 +1811,7 @@ describe("embedded decoration runtime", () => {
       () =>
         harness.acknowledgements.filter(
           ({ command }) =>
-            command === "plugin:decoration|frontend_geometry",
+            command === "plugin:window-decorations|frontend_geometry",
         ).length === 1,
       "the current geometry observer did not report exactly once",
     );
@@ -1825,7 +1825,7 @@ describe("embedded decoration runtime", () => {
     let geometryCalls = 0;
     const harness = createHarness({
       invokeImpl(command) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         geometryCalls += 1;
         return geometryCalls === 1 ? firstUpdate : undefined;
       },
@@ -1843,7 +1843,7 @@ describe("embedded decoration runtime", () => {
       "the first geometry update was not sent",
     );
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     maximize._boundingClientRect = {
       height: 32,
@@ -1860,7 +1860,7 @@ describe("embedded decoration runtime", () => {
       "the trailing geometry update was not sent",
     );
     const updates = harness.acknowledgements.filter(
-      ({ command }) => command === "plugin:decoration|frontend_geometry",
+      ({ command }) => command === "plugin:window-decorations|frontend_geometry",
     );
     assert.equal(updates.at(-1).args.snapGeometry.geometry.x, 620);
   });
@@ -1877,7 +1877,7 @@ describe("embedded decoration runtime", () => {
     const sequences = [];
     const harness = createHarness({
       invokeImpl(command, args) {
-        if (command !== "plugin:decoration|frontend_geometry") return undefined;
+        if (command !== "plugin:window-decorations|frontend_geometry") return undefined;
         const sequence = Number(args.snapGeometry.sequence);
         sequences.push(sequence);
         if (sequences.length === 1) return firstUpdate;
@@ -1898,7 +1898,7 @@ describe("embedded decoration runtime", () => {
     await waitForCondition(() => sequences.length === 1, "initial geometry was not sent");
 
     const maximize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="maximize"]',
+      '[data-tauri-window-decorations-control="maximize"]',
     );
     for (let update = 0; update < 12; update += 1) {
       maximize._boundingClientRect = {
@@ -1935,14 +1935,14 @@ describe("embedded decoration runtime", () => {
     await waitForCondition(
       () =>
         harness.acknowledgements.some(
-          ({ command }) => command === "plugin:decoration|frontend_geometry",
+          ({ command }) => command === "plugin:window-decorations|frontend_geometry",
         ),
       "the geometry burst was not delivered",
     );
     await Promise.resolve();
 
     const geometryUpdates = harness.acknowledgements.filter(
-      ({ command }) => command === "plugin:decoration|frontend_geometry",
+      ({ command }) => command === "plugin:window-decorations|frontend_geometry",
     ).length;
     assert.ok(
       geometryUpdates >= 1 && geometryUpdates <= 2,
@@ -1975,20 +1975,20 @@ describe("embedded decoration runtime", () => {
     await waitForCondition(
       () =>
         first.acknowledgements.some(
-          ({ command }) => command === "plugin:decoration|window_control",
+          ({ command }) => command === "plugin:window-decorations|window_control",
         ),
       "the first webview did not route its control action",
     );
 
     assert.equal(
       first.acknowledgements.filter(
-        ({ command }) => command === "plugin:decoration|window_control",
+        ({ command }) => command === "plugin:window-decorations|window_control",
       ).length,
       1,
     );
     assert.equal(
       second.acknowledgements.filter(
-        ({ command }) => command === "plugin:decoration|window_control",
+        ({ command }) => command === "plugin:window-decorations|window_control",
       ).length,
       0,
     );
@@ -2027,7 +2027,7 @@ describe("embedded decoration runtime", () => {
       true,
     );
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "72px",
     );
   });
@@ -2041,7 +2041,7 @@ describe("embedded decoration runtime", () => {
 
     const runtime = harness.window.__TAURI_PLUGIN_DECORATION__;
     const root = harness.window.document.querySelector(
-      "[data-tauri-plugin-decoration-root]",
+      "[data-tauri-plugin-window-decorations-root]",
     );
     const style = harness.window.document.documentElement.style;
     assert.equal(
@@ -2058,9 +2058,9 @@ describe("embedded decoration runtime", () => {
       }),
       true,
     );
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), "");
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), "");
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "0px",
     );
     assert.equal(
@@ -2070,9 +2070,9 @@ describe("embedded decoration runtime", () => {
       }),
       true,
     );
-    assert.equal(root.hasAttribute("data-tauri-decoration-fullscreen"), false);
+    assert.equal(root.hasAttribute("data-tauri-window-decorations-fullscreen"), false);
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "72px",
     );
   });
@@ -2087,7 +2087,7 @@ describe("embedded decoration runtime", () => {
 
     const runtime = harness.window.__TAURI_PLUGIN_DECORATION__;
     const root = harness.window.document.querySelector(
-      "[data-tauri-plugin-decoration-root]",
+      "[data-tauri-plugin-window-decorations-root]",
     );
     const style = harness.window.document.documentElement.style;
     assert.equal(isFullscreen.calls.length, 0);
@@ -2098,9 +2098,9 @@ describe("embedded decoration runtime", () => {
       }),
       true,
     );
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), "");
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), "");
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "0px",
     );
 
@@ -2111,9 +2111,9 @@ describe("embedded decoration runtime", () => {
       }),
       true,
     );
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), null);
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), null);
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "72px",
     );
   });
@@ -2186,7 +2186,7 @@ describe("embedded decoration runtime", () => {
     );
     assert.equal(
       harness.window.document.documentElement.style.getPropertyValue(
-        "--tauri-plugin-decoration-left-clearance",
+        "--tauri-plugin-window-decorations-left-clearance",
       ),
       "72px",
     );
@@ -2207,11 +2207,11 @@ describe("embedded decoration runtime", () => {
 
     const style = harness.window.document.documentElement.style;
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "86px",
     );
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "48px",
     );
   });
@@ -2230,11 +2230,11 @@ describe("embedded decoration runtime", () => {
 
     const style = harness.window.document.documentElement.style;
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "0px",
     );
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "0px",
     );
   });
@@ -2270,14 +2270,14 @@ describe("embedded decoration runtime", () => {
     );
 
     const close = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="close"]',
+      '[data-tauri-window-decorations-control="close"]',
     );
     const image = close.querySelector("img");
     image.dispatchEvent(new harness.window.Event("error"));
 
     assert.equal(image.getAttribute("src"), null);
     assert.equal(
-      close.getAttribute("data-tauri-decoration-icon-fallback"),
+      close.getAttribute("data-tauri-window-decorations-icon-fallback"),
       "",
     );
   });
@@ -2291,7 +2291,7 @@ describe("embedded decoration runtime", () => {
     );
 
     const handles = harness.window.document.querySelectorAll(
-      "[data-tauri-decoration-resize]",
+      "[data-tauri-window-decorations-resize]",
     );
     assert.equal(handles.length, 0);
   });
@@ -2301,7 +2301,7 @@ describe("embedded decoration runtime", () => {
     const harness = createHarness({
       invokeImpl: async (command, args) => {
         if (
-          command === "plugin:decoration|window_control" &&
+          command === "plugin:window-decorations|window_control" &&
           args.action === "minimize" &&
           denied
         ) {
@@ -2317,17 +2317,17 @@ describe("embedded decoration runtime", () => {
     );
 
     const minimize = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="minimize"]',
+      '[data-tauri-window-decorations-control="minimize"]',
     );
     const close = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="close"]',
+      '[data-tauri-window-decorations-control="close"]',
     );
     minimize.dispatchEvent(new harness.window.Event("click"));
     await waitForCalls(harness.consoleError, 1);
     assert.equal(minimize.getAttribute("disabled"), null);
     assert.equal(
       harness.invoke.calls.some(
-        ([command]) => command === "plugin:decoration|frontend_fallback",
+        ([command]) => command === "plugin:window-decorations|frontend_fallback",
       ),
       false,
     );
@@ -2337,7 +2337,7 @@ describe("embedded decoration runtime", () => {
     );
     assert.ok(
       harness.window.document.querySelector(
-        "[data-tauri-plugin-decoration-root]",
+        "[data-tauri-plugin-window-decorations-root]",
       ),
     );
     minimize.dispatchEvent(new harness.window.Event("click"));
@@ -2345,7 +2345,7 @@ describe("embedded decoration runtime", () => {
       () =>
         harness.acknowledgements.filter(
           ({ command, args }) =>
-            command === "plugin:decoration|window_control" &&
+            command === "plugin:window-decorations|window_control" &&
             args.action === "minimize",
         ).length === 2,
       "a second Linux minimize request was not sent",
@@ -2355,7 +2355,7 @@ describe("embedded decoration runtime", () => {
       () =>
         harness.acknowledgements.some(
           ({ command, args }) =>
-            command === "plugin:decoration|window_control" &&
+            command === "plugin:window-decorations|window_control" &&
             args.action === "close",
         ),
       "the Linux close request was not sent",
@@ -2375,16 +2375,16 @@ describe("embedded decoration runtime", () => {
     );
 
     const root = harness.window.document.querySelector(
-      "[data-tauri-plugin-decoration-root]",
+      "[data-tauri-plugin-window-decorations-root]",
     );
     const style = harness.window.document.documentElement.style;
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), "");
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), "");
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "0px",
     );
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "0px",
     );
 
@@ -2394,13 +2394,13 @@ describe("embedded decoration runtime", () => {
       "window-state",
       { maximized: false, fullscreen: false, revision: 1 },
     );
-    assert.equal(root.getAttribute("data-tauri-decoration-fullscreen"), null);
+    assert.equal(root.getAttribute("data-tauri-window-decorations-fullscreen"), null);
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-left-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-left-clearance"),
       "48px",
     );
     assert.equal(
-      style.getPropertyValue("--tauri-plugin-decoration-right-clearance"),
+      style.getPropertyValue("--tauri-plugin-window-decorations-right-clearance"),
       "86px",
     );
     assert.equal(isFullscreen.calls.length, 0);
@@ -2415,7 +2415,7 @@ describe("embedded decoration runtime", () => {
     );
 
     const original = harness.window.document.querySelector(
-      '[data-tauri-decoration-control="close"]',
+      '[data-tauri-window-decorations-control="close"]',
     );
     harness.window.dispatchEvent(new harness.window.Event("focus"));
     harness.window.dispatchEvent(new harness.window.Event("blur"));
@@ -2424,13 +2424,13 @@ describe("embedded decoration runtime", () => {
 
     assert.equal(
       harness.invoke.calls.some(
-        ([command]) => command === "plugin:decoration|linux_options",
+        ([command]) => command === "plugin:window-decorations|linux_options",
       ),
       false,
     );
     assert.equal(
       harness.window.document.querySelector(
-        '[data-tauri-decoration-control="close"]',
+        '[data-tauri-window-decorations-control="close"]',
       ),
       original,
     );

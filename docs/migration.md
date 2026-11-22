@@ -4,7 +4,7 @@ This guide covers upgrades from the maintained 2.x line and early 3.0
 releases to 3.0.5. Applications on 1.x or older should move directly to the
 current integration instead of trying to preserve the old frontend contract.
 
-The current release requires Tauri 2.10 or later and Rust 1.88 or later.
+The current release requires Tauri 3 or later and Rust 1.95 or later.
 
 ## Migrate from 2.x
 
@@ -170,7 +170,7 @@ application dependency and lockfile:
 
 ```toml
 [dependencies]
-tauri = "2.10.0"
+tauri = "3.0.0-alpha.6"
 tauri-plugin-window-decorations = "3.0.5"
 ```
 
@@ -178,7 +178,7 @@ This baseline includes Wry's live macOS webview transparency implementation.
 Applications that call `make_transparent()` need no API change, but they must
 keep the `macos-transparency` feature enabled.
 
-No compatibility fixture or fallback remains for Tauri 2.9.
+No compatibility fixture or fallback remains for Tauri 3.
 
 ## Verify the migrated application
 

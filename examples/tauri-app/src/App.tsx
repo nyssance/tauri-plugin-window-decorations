@@ -39,9 +39,9 @@ function App() {
 			import.meta.env.VITE_TAURI_E2E === "1" &&
 			parameters.has("e2e-rapid-rotation");
 		if (rapidRotation) {
-			const rotationKey = "tauri-plugin-decoration-e2e-rotations";
-			const rotationMarker = "data-tauri-decoration-e2e-rotation-id";
-			const rotationCountMarker = "data-tauri-decoration-e2e-rotation-count";
+			const rotationKey = "tauri-plugin-window-decorations-e2e-rotations";
+			const rotationMarker = "data-tauri-window-decorations-e2e-rotation-id";
+			const rotationCountMarker = "data-tauri-window-decorations-e2e-rotation-count";
 			const rotation = JSON.parse(sessionStorage.getItem(rotationKey) ?? "null") as
 				| { count: number; id: string }
 				| null;
@@ -101,7 +101,7 @@ function App() {
 
 			<main className="app-body">
 				<section className="intro" aria-labelledby="demo-title">
-					<p className="eyebrow">tauri-plugin-decoration</p>
+					<p className="eyebrow">tauri-plugin-window-decorations</p>
 					<h1 id="demo-title">One window. Native controls.</h1>
 					<p>
 						The backend awaits the complete decoration transaction before revealing

@@ -83,7 +83,7 @@ window.make_transparent().await?;
 > `macos-transparency` enables Wry's private macOS API. Do not use it for an
 > application intended for Mac App Store distribution.
 
-The `make_transparent()` implementation requires Tauri 2.10 or later. That
+The `make_transparent()` implementation requires Tauri 3 or later. That
 baseline provides the Wry support needed to update a live macOS webview.
 
 ## Linux

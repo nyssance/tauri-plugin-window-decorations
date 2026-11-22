@@ -1573,7 +1573,7 @@ fn synchronize_frontend_window_state<R: Runtime>(window: WebviewWindow<R>) {
 }
 
 fn build_plugin<R: Runtime>(activation_timeout: Duration) -> TauriPlugin<R> {
-    Builder::new("decoration")
+    Builder::new("window-decorations")
         .initialization_script(frontend::init_script(platform()))
         .register_uri_scheme_protocol(protocol::SCHEME, |_context, request| {
             protocol::handle(request)
