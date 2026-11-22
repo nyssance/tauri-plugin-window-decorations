@@ -344,6 +344,19 @@ impl Registry {
         })
     }
 
+    /// Return the native overlay rectangle for parent-window hit testing.
+    ///
+    /// Windows asks the top-level window for `WM_NCHITTEST` before it chooses
+    /// a child HWND. Keeping this lookup in the registry lets the Win32
+    /// subclass report `HTMAXBUTTON` even when the webview child is above the
+    /// transparent overlay in the native z-order.
+    pub(crate) fn overlay_for_parent(&self, parent: isize) -> Option<isize> {
+        self.entries.get(&parent).and_then(|entry| {
+            (!entry.fullscreen && !entry.awaiting_geometry && entry.overlay_live)
+                .then_some(entry.overlay)
+        })
+    }
+
     pub(crate) fn update_geometry(
         &mut self,
         parent: isize,

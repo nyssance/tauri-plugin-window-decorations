@@ -1,6 +1,6 @@
 [package]
 name = "tauri-plugin-window-decorations"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["nyssance"]
 description = "Native window controls, custom decorations, and Windows 11 Snap Layout for Tauri 3 desktop apps."
 edition = "2021"

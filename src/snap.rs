@@ -11,7 +11,7 @@ use std::{
 };
 use tauri::{Runtime, WebviewWindow};
 use windows_sys::Win32::{
-    Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM},
+    Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, RECT, WPARAM},
     System::LibraryLoader::GetModuleHandleW,
     UI::{
         Controls::WM_MOUSELEAVE,
@@ -19,12 +19,12 @@ use windows_sys::Win32::{
         Input::KeyboardAndMouse::{TrackMouseEvent, TME_LEAVE, TME_NONCLIENT, TRACKMOUSEEVENT},
         Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass},
         WindowsAndMessaging::{
-            CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, RegisterClassExW,
-            SetWindowPos, ShowWindow, CS_HREDRAW, CS_VREDRAW, HTMAXBUTTON, HWND_TOP,
-            SWP_NOACTIVATE, SWP_SHOWWINDOW, SW_HIDE, WM_DPICHANGED, WM_LBUTTONDOWN, WM_LBUTTONUP,
-            WM_MOUSEMOVE, WM_NCDESTROY, WM_NCHITTEST, WM_NCLBUTTONDOWN, WM_NCLBUTTONUP,
-            WM_NCMOUSELEAVE, WM_NCMOUSEMOVE, WM_SIZE, WNDCLASSEXW, WS_CHILD, WS_CLIPSIBLINGS,
-            WS_VISIBLE,
+            CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect,
+            RegisterClassExW, SetWindowPos, ShowWindow, CS_HREDRAW, CS_VREDRAW, HTMAXBUTTON,
+            HWND_TOP, SWP_NOACTIVATE, SWP_SHOWWINDOW, SW_HIDE, WM_DPICHANGED, WM_LBUTTONDOWN,
+            WM_LBUTTONUP, WM_MOUSEMOVE, WM_NCDESTROY, WM_NCHITTEST, WM_NCLBUTTONDOWN,
+            WM_NCLBUTTONUP, WM_NCMOUSELEAVE, WM_NCMOUSEMOVE, WM_SIZE, WNDCLASSEXW, WS_CHILD,
+            WS_CLIPSIBLINGS, WS_VISIBLE,
         },
     },
 };
@@ -518,6 +518,32 @@ fn last_os_error(operation: &str) -> tauri::Error {
 
 unsafe fn handle_parent_message(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     match msg {
+        WM_NCHITTEST => {
+            // The webview is a child HWND, so Windows can otherwise route the
+            // hit test to it before the transparent snap overlay. Report the
+            // maximize hit on the top-level window as well; this is the native
+            // signal that enables the Windows 11 Snap Layout flyout.
+            let raw = lparam as u32;
+            let x = (raw & 0xffff) as i16 as i32;
+            let y = ((raw >> 16) & 0xffff) as i16 as i32;
+            let overlay = with_registry(|registry| registry.overlay_for_parent(hwnd as isize));
+            if let Some(overlay) = overlay {
+                let mut rect = RECT {
+                    left: 0,
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                };
+                if unsafe { GetWindowRect(overlay as HWND, &mut rect) } != 0
+                    && x >= rect.left
+                    && x < rect.right
+                    && y >= rect.top
+                    && y < rect.bottom
+                {
+                    return HTMAXBUTTON as LRESULT;
+                }
+            }
+        }
         WM_SIZE | WM_DPICHANGED => {
             if let Some(position) =
                 with_registry(|registry| registry.await_fresh_geometry(hwnd as isize))
