@@ -14,15 +14,17 @@ use windows_sys::Win32::{
     Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM},
     System::LibraryLoader::GetModuleHandleW,
     UI::{
+        Controls::WM_MOUSELEAVE,
         HiDpi::GetDpiForWindow,
         Input::KeyboardAndMouse::{TrackMouseEvent, TME_LEAVE, TME_NONCLIENT, TRACKMOUSEEVENT},
         Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass},
         WindowsAndMessaging::{
             CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, RegisterClassExW,
             SetWindowPos, ShowWindow, CS_HREDRAW, CS_VREDRAW, HTMAXBUTTON, HWND_TOP,
-            SWP_NOACTIVATE, SWP_SHOWWINDOW, SW_HIDE, WM_DPICHANGED, WM_NCDESTROY, WM_NCHITTEST,
-            WM_NCLBUTTONDOWN, WM_NCLBUTTONUP, WM_NCMOUSELEAVE, WM_NCMOUSEMOVE, WM_SIZE,
-            WNDCLASSEXW, WS_CHILD, WS_CLIPSIBLINGS, WS_VISIBLE,
+            SWP_NOACTIVATE, SWP_SHOWWINDOW, SW_HIDE, WM_DPICHANGED, WM_LBUTTONDOWN, WM_LBUTTONUP,
+            WM_MOUSEMOVE, WM_NCDESTROY, WM_NCHITTEST, WM_NCLBUTTONDOWN, WM_NCLBUTTONUP,
+            WM_NCMOUSELEAVE, WM_NCMOUSEMOVE, WM_SIZE, WNDCLASSEXW, WS_CHILD, WS_CLIPSIBLINGS,
+            WS_VISIBLE,
         },
     },
 };
@@ -565,14 +567,22 @@ unsafe extern "system" fn parent_subclass_proc(
 unsafe fn handle_overlay_message(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     match msg {
         WM_NCHITTEST if registered_overlay(hwnd) => return HTMAXBUTTON as LRESULT,
-        WM_NCMOUSEMOVE => {
+        // The snap target is a child HWND. Depending on the host webview and
+        // Windows hit-test path, pointer messages can arrive through either
+        // the non-client or client message family. Handle both so CEF and Wry
+        // deliver the same native hover/click behavior.
+        WM_NCMOUSEMOVE | WM_MOUSEMOVE => {
             let effects = with_registry(|registry| registry.mouse_move(hwnd as isize));
             let entered = effects.entered();
             effects.dispatch();
             if entered {
                 let mut track = TRACKMOUSEEVENT {
                     cbSize: std::mem::size_of::<TRACKMOUSEEVENT>() as u32,
-                    dwFlags: TME_LEAVE | TME_NONCLIENT,
+                    dwFlags: if msg == WM_NCMOUSEMOVE {
+                        TME_LEAVE | TME_NONCLIENT
+                    } else {
+                        TME_LEAVE
+                    },
                     hwndTrack: hwnd,
                     dwHoverTime: 0,
                 };
@@ -584,17 +594,17 @@ unsafe fn handle_overlay_message(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: L
             }
             return 0;
         }
-        WM_NCMOUSELEAVE => {
+        WM_NCMOUSELEAVE | WM_MOUSELEAVE => {
             let effects = with_registry(|registry| registry.mouse_leave(hwnd as isize));
             effects.dispatch();
             return 0;
         }
-        WM_NCLBUTTONDOWN => {
+        WM_NCLBUTTONDOWN | WM_LBUTTONDOWN => {
             let effects = with_registry(|registry| registry.mouse_down(hwnd as isize));
             effects.dispatch();
             return 0;
         }
-        WM_NCLBUTTONUP => {
+        WM_NCLBUTTONUP | WM_LBUTTONUP => {
             let effects = with_registry(|registry| registry.mouse_up(hwnd as isize));
             effects.dispatch();
             return 0;
