@@ -5,7 +5,9 @@ use std::collections::BTreeMap;
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum Platform {
-    #[cfg(any(target_os = "macos", test))]
+    #[cfg(not(target_os = "windows"))]
+    Unsupported,
+    #[cfg(test)]
     Macos,
     #[cfg(any(target_os = "windows", test))]
     Windows,
@@ -222,7 +224,9 @@ pub(crate) fn bind_document_script(document_lease: u64) -> Result<String, serde_
 
 pub(crate) fn init_script(platform: Platform) -> String {
     let adapter = match platform {
-        #[cfg(any(target_os = "macos", test))]
+        #[cfg(not(target_os = "windows"))]
+        Platform::Unsupported => "",
+        #[cfg(test)]
         Platform::Macos => "",
         #[cfg(any(target_os = "windows", test))]
         Platform::Windows => include_str!("js/controls.js"),

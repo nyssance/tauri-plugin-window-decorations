@@ -41,17 +41,11 @@ mod lifecycle;
 mod native;
 mod protocol;
 
-#[cfg(target_os = "macos")]
-mod traffic;
-
 #[cfg(target_os = "windows")]
 mod snap;
 
 #[cfg(any(target_os = "windows", test))]
 mod snap_state;
-
-#[cfg(any(target_os = "macos", test))]
-mod traffic_state;
 
 const DEFAULT_ACTIVATION_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -154,10 +148,7 @@ impl DecorationError {
         Self::new(DecorationErrorKind::NativeRestore, detail)
     }
 
-    #[cfg(any(
-        target_os = "linux",
-        all(target_os = "macos", not(feature = "macos-transparency"))
-    ))]
+    #[cfg(not(target_os = "windows"))]
     pub(crate) fn unsupported_platform(detail: impl Into<String>) -> Self {
         Self::new(DecorationErrorKind::UnsupportedPlatform, detail)
     }
@@ -245,29 +236,6 @@ pub trait WebviewWindowExt<R: Runtime> {
     fn restore_decoration(&self) -> impl Future<Output = Result<(), DecorationError>> + Send;
     /// Returns the current lifecycle state without exposing frontend target tokens.
     fn decoration_status(&self) -> Result<DecorationStatus, DecorationError>;
-
-    /// Positions native AppKit traffic lights and waits for completion.
-    #[cfg(target_os = "macos")]
-    fn set_traffic_lights_inset(
-        &self,
-        x: f32,
-        y: f32,
-    ) -> impl Future<Output = Result<(), DecorationError>> + Send;
-}
-
-#[cfg(target_os = "macos")]
-/// Awaitable optional macOS window effects outside the core decoration lifecycle.
-pub trait MacOsWindowEffectsExt<R: Runtime> {
-    /// Makes the live WKWebView and NSWindow transparent.
-    ///
-    /// This requires the `macos-transparency` feature, which uses a private
-    /// Wry macOS API and is unsuitable for App Store distribution.
-    fn make_transparent(&self) -> impl Future<Output = Result<(), DecorationError>> + Send;
-    /// Sets the signed AppKit `NSWindowLevel` and waits for completion.
-    fn set_window_level(
-        &self,
-        level: i32,
-    ) -> impl Future<Output = Result<(), DecorationError>> + Send;
 }
 
 impl<R: Runtime> WebviewWindowExt<R> for WebviewWindow<R> {
@@ -281,98 +249,6 @@ impl<R: Runtime> WebviewWindowExt<R> for WebviewWindow<R> {
 
     fn decoration_status(&self) -> Result<DecorationStatus, DecorationError> {
         decoration_state_typed(self).map(|state| state.status(self.label()))
-    }
-
-    /// Position the macOS traffic-light buttons (close/minimize/zoom).
-    ///
-    /// The two parameters control different things because the buttons are
-    /// native OS controls positioned within an AppKit titlebar container:
-    ///
-    /// - `x` — **horizontal position**, in points from the left edge of the
-    ///   window's content. The first button is placed at `x`, and the other
-    ///   buttons preserve AppKit's measured native spacing relative to it.
-    ///   This is a direct offset.
-    ///
-    /// - `y` — **titlebar container height**, in points, added on top of the
-    ///   button height (`container_height = button_height + y`). The buttons
-    ///   are then **vertically centered** within that container. This is an
-    ///   *indirect* control: increasing `y` makes the container taller and
-    ///   pushes the centered buttons down from the window's top edge;
-    ///   decreasing it pulls them up. It does *not* offset the buttons off
-    ///   center within the container.
-    ///
-    /// As a side effect, this method exposes the right edge of the last button
-    /// to the webview as `--tauri-plugin-window-decorations-left-clearance` so app
-    /// content can avoid overlapping the cluster.
-    ///
-    /// This is only available on macOS.
-    #[cfg(target_os = "macos")]
-    fn set_traffic_lights_inset(
-        &self,
-        x: f32,
-        y: f32,
-    ) -> impl Future<Output = Result<(), DecorationError>> + Send {
-        let window = self.clone();
-        async move {
-            let deadline = decoration_state_typed(&window)?.activation_timeout();
-            let dispatch_window = window.clone();
-            dispatch_webview(&window, deadline, "traffic-lights-inset", move || {
-                traffic::set_inset(&dispatch_window, x.into(), y.into())
-                    .map_err(|error| DecorationError::native_apply(error.to_string()))
-            })
-            .await
-        }
-    }
-}
-
-#[cfg(target_os = "macos")]
-impl<R: Runtime> MacOsWindowEffectsExt<R> for WebviewWindow<R> {
-    /// Make the live WKWebView and NSWindow transparent.
-    ///
-    /// Unlike Tauri's creation-time `transparent` option, this changes an
-    /// existing webview. Enable the `macos-transparency` Cargo feature to opt
-    /// into Wry's private macOS transparency API.
-    fn make_transparent(&self) -> impl Future<Output = Result<(), DecorationError>> + Send {
-        let window = self.clone();
-        async move {
-            #[cfg(feature = "macos-transparency")]
-            {
-                let deadline = decoration_state_typed(&window)?.activation_timeout();
-                let dispatch_window = window.clone();
-                dispatch_webview(&window, deadline, "make-transparent", move || {
-                    traffic::make_transparent(&dispatch_window)
-                        .map_err(|error| DecorationError::native_apply(error.to_string()))
-                })
-                .await
-            }
-            #[cfg(not(feature = "macos-transparency"))]
-            {
-                let _ = window;
-                Err(DecorationError::unsupported_platform(
-                    "make_transparent requires the tauri-plugin-window-decorations macos-transparency feature",
-                ))
-            }
-        }
-    }
-
-    /// Set the window level.
-    /// This will set the window level to the specified value.
-    /// NSWindowLevel values can be found [here](https://developer.apple.com/documentation/appkit/nswindowlevel?language=objc).
-    /// This is only available on macOS.
-    fn set_window_level(
-        &self,
-        level: i32,
-    ) -> impl Future<Output = Result<(), DecorationError>> + Send {
-        let window = self.clone();
-        async move {
-            let deadline = decoration_state_typed(&window)?.activation_timeout();
-            let dispatch_window = window.clone();
-            dispatch_webview(&window, deadline, "window-level", move || {
-                traffic::set_window_level(&dispatch_window, level)
-                    .map_err(|error| DecorationError::native_apply(error.to_string()))
-            })
-            .await
-        }
     }
 }
 
@@ -431,19 +307,14 @@ fn map_dispatch_error(error: DispatchError<DecorationError>) -> DecorationError 
     }
 }
 
-#[cfg(target_os = "macos")]
-fn platform() -> Platform {
-    Platform::Macos
-}
-
 #[cfg(target_os = "windows")]
 fn platform() -> Platform {
     Platform::Windows
 }
 
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+#[cfg(not(target_os = "windows"))]
 fn platform() -> Platform {
-    Platform::Linux
+    Platform::Unsupported
 }
 
 #[cfg(target_os = "windows")]
@@ -468,19 +339,12 @@ fn frontend_options<R: Runtime>(
     Ok(options)
 }
 
-#[cfg(target_os = "macos")]
-fn frontend_options<R: Runtime>(
-    _window: &WebviewWindow<R>,
-) -> Result<FrontendOptions, DecorationError> {
-    Ok(FrontendOptions::default())
-}
-
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+#[cfg(not(target_os = "windows"))]
 fn frontend_options<R: Runtime>(
     _window: &WebviewWindow<R>,
 ) -> Result<FrontendOptions, DecorationError> {
     Err(DecorationError::unsupported_platform(
-        "window decorations are supported only on Windows and macOS",
+        "window decorations are supported only on Windows",
     ))
 }
 

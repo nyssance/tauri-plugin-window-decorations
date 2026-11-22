@@ -9,9 +9,6 @@ use crate::{
     DecorationError, DecorationStatus,
 };
 
-#[cfg(target_os = "macos")]
-use crate::traffic_state::TrafficRegistry;
-
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub(crate) struct Generation(u64);
 
@@ -787,8 +784,6 @@ pub(crate) enum RecoveryRequest {
 pub(crate) struct DecorationState {
     activation_timeout: std::time::Duration,
     runtime: Mutex<RuntimeState>,
-    #[cfg(target_os = "macos")]
-    traffic: Mutex<TrafficRegistry>,
 }
 
 impl DecorationState {
@@ -796,8 +791,6 @@ impl DecorationState {
         Self {
             activation_timeout,
             runtime: Mutex::new(RuntimeState::default()),
-            #[cfg(target_os = "macos")]
-            traffic: Mutex::new(TrafficRegistry::default()),
         }
     }
 
@@ -807,12 +800,6 @@ impl DecorationState {
 
     fn runtime(&self) -> MutexGuard<'_, RuntimeState> {
         self.runtime.lock().unwrap()
-    }
-
-    #[cfg(target_os = "macos")]
-    pub(crate) fn with_traffic<T>(&self, action: impl FnOnce(&mut TrafficRegistry) -> T) -> T {
-        let mut traffic = self.traffic.lock().unwrap();
-        action(&mut traffic)
     }
 
     pub(crate) fn request_activation(

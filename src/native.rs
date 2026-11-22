@@ -21,12 +21,12 @@ fn prepared_policy<R: Runtime>(
         })
 }
 
-#[cfg(any(target_os = "windows", target_os = "macos"))]
+#[cfg(target_os = "windows")]
 pub(crate) fn restore_frame<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), Error> {
     window.set_decorations(true)
 }
 
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+#[cfg(not(target_os = "windows"))]
 pub(crate) fn restore_frame<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), Error> {
     window.set_decorations(true)
 }
@@ -36,28 +36,9 @@ pub(crate) fn cleanup_helpers<R: Runtime>(window: &WebviewWindow<R>) -> Result<(
     crate::snap::uninstall(window)
 }
 
-#[cfg(target_os = "macos")]
-pub(crate) fn cleanup_helpers<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), Error> {
-    crate::traffic::deactivate(window)
-}
-
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+#[cfg(not(target_os = "windows"))]
 pub(crate) fn cleanup_helpers<R: Runtime>(_window: &WebviewWindow<R>) -> Result<(), Error> {
     Ok(())
-}
-
-#[cfg(target_os = "macos")]
-pub(crate) fn apply_decorations<R: Runtime>(
-    window: &WebviewWindow<R>,
-    target: FrontendTarget,
-    _snap_geometry: Option<SnapGeometryUpdate>,
-) -> Result<(), DecorationError> {
-    prepared_policy(window, target)?;
-    window
-        .set_decorations(true)
-        .map_err(|error| DecorationError::native_apply(error.to_string()))?;
-    crate::traffic::activate(window, target)
-        .map_err(|error| DecorationError::native_apply(error.to_string()))
 }
 
 #[cfg(target_os = "windows")]
@@ -83,7 +64,7 @@ pub(crate) fn apply_decorations<R: Runtime>(
         .map_err(|error| DecorationError::native_apply(error.to_string()))
 }
 
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+#[cfg(not(target_os = "windows"))]
 pub(crate) fn apply_decorations<R: Runtime>(
     window: &WebviewWindow<R>,
     target: FrontendTarget,
@@ -91,7 +72,7 @@ pub(crate) fn apply_decorations<R: Runtime>(
 ) -> Result<(), DecorationError> {
     let _ = (window, target);
     Err(DecorationError::unsupported_platform(
-        "window decorations are supported only on Windows and macOS",
+        "window decorations are supported only on Windows",
     ))
 }
 

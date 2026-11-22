@@ -1,6 +1,6 @@
 [package]
 name = "tauri-plugin-window-decorations"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["nyssance"]
 description = "Native window controls, custom decorations, and Windows 11 Snap Layout for Tauri 3 desktop apps."
 edition = "2021"
@@ -23,7 +23,6 @@ repository = "https://github.com/nyssance/tauri-plugin-window-decorations"
 
 [features]
 default = []
-macos-transparency = []
 
 [dependencies]
 tauri = { version = "3.0.0-alpha.6", default-features = false }
@@ -31,21 +30,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 anyhow = "1.0"
 tokio = { version = "1.52.3", features = ["sync", "time"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-objc2 = { version = "=0.6.4", features = ["exception"] }
-objc2-app-kit = { version = "=0.3.2", default-features = false, features = [
-    "std",
-    "NSButton",
-    "NSControl",
-    "NSResponder",
-    "NSView",
-    "NSWindow",
-] }
-objc2-foundation = { version = "=0.3.2", default-features = false, features = [
-    "std",
-    "NSGeometry",
-] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { version = "0.61", features = [
