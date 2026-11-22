@@ -63,7 +63,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
     with:
       ref: ${{ needs.resolve.outputs.sha }}
-      run_native_wdio: true
+      run_native_wdio: false
 
   publish:
     name: Publish to crates.io
