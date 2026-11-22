@@ -23,6 +23,14 @@ measures the rendered maximize button and titlebar in the webview, converts the
 geometry to physical pixels, validates it in Rust, and installs a Win32 overlay
 for that bounded region.
 
+Windows 11 does not offer the flyout for a window whose client area starts
+below its top edge. Windowing layers keep a thin non-client strip above the
+client area of an undecorated window so that Windows still draws its shadow and
+rounded corners. While the hit target is installed, the plugin moves a strip
+that only offsets the top edge to the bottom edge of the window, and the
+windowing layer's own layout returns when the hit target is removed. A
+maximized window and a frame that also insets the sides are left unchanged.
+
 The hit target is disabled when:
 
 - the current document is no longer the active decoration owner;

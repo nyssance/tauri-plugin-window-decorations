@@ -2213,7 +2213,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-window-decorations"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "anyhow",
  "raw-window-handle",

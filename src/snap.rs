@@ -21,10 +21,11 @@ use windows_sys::Win32::{
         WindowsAndMessaging::{
             CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect,
             RegisterClassExW, SetWindowPos, ShowWindow, CS_HREDRAW, CS_VREDRAW, HTMAXBUTTON,
-            HWND_TOP, SWP_NOACTIVATE, SWP_SHOWWINDOW, SW_HIDE, WM_DPICHANGED, WM_LBUTTONDOWN,
-            WM_LBUTTONUP, WM_MOUSEMOVE, WM_NCDESTROY, WM_NCHITTEST, WM_NCLBUTTONDOWN,
-            WM_NCLBUTTONUP, WM_NCMOUSELEAVE, WM_NCMOUSEMOVE, WM_SIZE, WNDCLASSEXW, WS_CHILD,
-            WS_CLIPSIBLINGS, WS_VISIBLE,
+            HWND_TOP, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
+            SWP_SHOWWINDOW, SW_HIDE, WM_DPICHANGED, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE,
+            WM_NCCALCSIZE, WM_NCDESTROY, WM_NCHITTEST, WM_NCLBUTTONDOWN, WM_NCLBUTTONUP,
+            WM_NCMOUSELEAVE, WM_NCMOUSEMOVE, WM_SIZE, WNDCLASSEXW, WS_CHILD, WS_CLIPSIBLINGS,
+            WS_VISIBLE,
         },
     },
 };
@@ -338,6 +339,12 @@ unsafe fn install_hwnd(
         };
     }
 
+    // Recalculate the frame before the overlay is registered, so a client size
+    // change caused by the relocated strip does not hide a freshly measured
+    // overlay.
+    // SAFETY: `parent` is the live HWND that now carries the subclass.
+    unsafe { refresh_frame(parent) };
+
     if let Err(error) =
         with_registry(|registry| registry.insert(hwnd, overlay as isize, geometry, callbacks))
     {
@@ -373,6 +380,21 @@ unsafe fn install_hwnd(
 }
 
 unsafe fn uninstall_hwnd(hwnd: isize) -> Result<(), tauri::Error> {
+    if with_registry(|registry| registry.position(hwnd)).is_none() {
+        return Ok(());
+    }
+    // SAFETY: The caller guarantees `hwnd` is the live parent of this overlay.
+    let result = unsafe { remove_overlay(hwnd) };
+    if with_registry(|registry| registry.position(hwnd)).is_none() {
+        // The subclass is gone: let the windowing layer lay the frame out
+        // again without the relocated strip.
+        // SAFETY: `hwnd` is still the live parent window.
+        unsafe { refresh_frame(hwnd as HWND) };
+    }
+    result
+}
+
+unsafe fn remove_overlay(hwnd: isize) -> Result<(), tauri::Error> {
     let parent = hwnd as HWND;
     let Some(position) = with_registry(|registry| registry.position(hwnd)) else {
         return Ok(());
@@ -406,6 +428,47 @@ unsafe fn uninstall_hwnd(hwnd: isize) -> Result<(), tauri::Error> {
         removed.close();
     }
     Ok(())
+}
+
+/// Asks Windows to recompute the non-client area of `hwnd`.
+unsafe fn refresh_frame(hwnd: HWND) {
+    // SAFETY: The caller guarantees `hwnd` is a live window on this thread.
+    unsafe {
+        SetWindowPos(
+            hwnd,
+            std::ptr::null_mut(),
+            0,
+            0,
+            0,
+            0,
+            SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+        )
+    };
+}
+
+/// Moves a non-client strip that only offsets the top edge to the bottom edge.
+///
+/// Windowing layers keep a thin non-client strip on undecorated windows so
+/// that Windows still draws the shadow and rounded corners, and place it above
+/// the client area. Windows 11 does not offer the Snap Layout flyout for a
+/// window whose client area starts below its top edge, even when the maximize
+/// control reports `HTMAXBUTTON`. The strip serves the frame equally well
+/// below the client area, where it does not block the flyout.
+///
+/// Returns `None` when `computed` is anything other than a top-only offset of
+/// `proposed`: a decorated frame, a maximized window clamped to the work area,
+/// or a client area that already starts at the top edge.
+fn relocate_top_strip(proposed: &RECT, computed: &RECT) -> Option<RECT> {
+    let strip = computed.top - proposed.top;
+    if strip <= 0 || computed.left != proposed.left || computed.right != proposed.right {
+        return None;
+    }
+    Some(RECT {
+        left: computed.left,
+        top: proposed.top,
+        right: computed.right,
+        bottom: computed.bottom.min(proposed.bottom) - strip,
+    })
 }
 
 fn register_class() -> Result<HINSTANCE, tauri::Error> {
@@ -518,6 +581,21 @@ fn last_os_error(operation: &str) -> tauri::Error {
 
 unsafe fn handle_parent_message(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     match msg {
+        WM_NCCALCSIZE if wparam != 0 => {
+            // With a non-zero wParam, lParam points to NCCALCSIZE_PARAMS, whose
+            // first rectangle is the proposed window rectangle on entry and
+            // the client rectangle on return.
+            let client = lparam as *mut RECT;
+            // SAFETY: Win32 supplies a valid NCCALCSIZE_PARAMS for this message.
+            let proposed = unsafe { *client };
+            // SAFETY: These are the unchanged parameters of this callback.
+            let result = unsafe { DefSubclassProc(hwnd, msg, wparam, lparam) };
+            // SAFETY: The same pointer stays valid until this handler returns.
+            if let Some(relocated) = relocate_top_strip(&proposed, unsafe { &*client }) {
+                unsafe { *client = relocated };
+            }
+            return result;
+        }
         WM_NCHITTEST => {
             // The webview is a child HWND, so Windows can otherwise route the
             // hit test to it before the transparent snap overlay. Report the
@@ -684,7 +762,45 @@ fn window_hwnd<R: Runtime>(window: &WebviewWindow<R>) -> Result<isize, tauri::Er
 
 #[cfg(test)]
 mod tests {
-    use super::{trusted_caption_region, Geometry};
+    use super::{relocate_top_strip, trusted_caption_region, Geometry, RECT};
+
+    fn rect(left: i32, top: i32, right: i32, bottom: i32) -> RECT {
+        RECT {
+            left,
+            top,
+            right,
+            bottom,
+        }
+    }
+
+    fn edges(rect: RECT) -> (i32, i32, i32, i32) {
+        (rect.left, rect.top, rect.right, rect.bottom)
+    }
+
+    #[test]
+    fn a_top_only_strip_moves_below_the_client_area() {
+        // The client area shifted down by one pixel, overflowing the bottom.
+        let relocated =
+            relocate_top_strip(&rect(100, 200, 900, 800), &rect(100, 201, 900, 801)).unwrap();
+        assert_eq!(edges(relocated), (100, 200, 900, 799));
+
+        // A two-pixel strip that shortened the client area instead.
+        let relocated =
+            relocate_top_strip(&rect(100, 200, 900, 800), &rect(100, 202, 900, 800)).unwrap();
+        assert_eq!(edges(relocated), (100, 200, 900, 798));
+    }
+
+    #[test]
+    fn other_client_rectangles_are_left_to_the_windowing_layer() {
+        let proposed = rect(100, 200, 900, 800);
+        // The client area already starts at the top edge.
+        assert!(relocate_top_strip(&proposed, &proposed).is_none());
+        assert!(relocate_top_strip(&proposed, &rect(100, 200, 900, 799)).is_none());
+        // A decorated frame also insets the sides.
+        assert!(relocate_top_strip(&proposed, &rect(108, 231, 892, 792)).is_none());
+        // A maximized window clamped to the monitor work area.
+        assert!(relocate_top_strip(&rect(-8, -8, 1928, 1088), &rect(0, 0, 1920, 1040)).is_none());
+    }
 
     #[test]
     fn trusted_snap_geometry_uses_measured_titlebar_and_control_bounds() {
