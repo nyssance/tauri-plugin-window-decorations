@@ -91,7 +91,7 @@ impl EventBridge {
             SnapEvent::Click => {
                 let _ = self
                     .clicks
-                    .fetch_update(Ordering::Release, Ordering::Relaxed, |clicks| {
+                    .try_update(Ordering::Release, Ordering::Relaxed, |clicks| {
                         Some(clicks.saturating_add(1))
                     });
             }
@@ -117,7 +117,7 @@ impl EventBridge {
         let state = self.state.load(Ordering::Acquire);
         let clicks = self
             .clicks
-            .fetch_update(Ordering::Acquire, Ordering::Relaxed, |clicks| {
+            .try_update(Ordering::Acquire, Ordering::Relaxed, |clicks| {
                 Some(clicks.saturating_sub(MAX_CLICK_EDGES_PER_FLUSH))
             })
             .unwrap_or(0);
