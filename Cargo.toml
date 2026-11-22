@@ -4,7 +4,7 @@ version = "0.1.4"
 authors = ["nyssance"]
 description = "Native window controls, custom decorations, and Windows 11 Snap Layout for Tauri 3 desktop apps."
 edition = "2021"
-rust-version = "1.95"
+rust-version = "1.100"
 include = [
     "/src/**/*.rs",
     "/src/**/*.js",
