@@ -11,22 +11,12 @@ on:
         description: Full candidate commit SHA to validate
         required: true
         type: string
-      run_native_wdio:
-        description: Run native WDIO only after confirming the selected GitHub Actions runner supports it
-        required: false
-        default: false
-        type: boolean
   workflow_call:
     inputs:
       ref:
         description: Immutable commit to validate
         required: false
         type: string
-      run_native_wdio:
-        description: Run native WDIO only after confirming the selected GitHub Actions runner supports it
-        required: false
-        default: false
-        type: boolean
 
 permissions: {}
 
@@ -55,8 +45,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
-    env:
-      EVIDENCE_EXPECTED_SHA: ${{ inputs.ref || github.sha }}
     strategy:
       fail-fast: false
       matrix:
@@ -84,21 +72,9 @@ jobs:
             libwebkit2gtk-4.1-dev \
             pkg-config
 
-      - name: Install opt-in Linux native WDIO prerequisites
-        if: inputs.run_native_wdio && runner.os == 'Linux'
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes weston
-
       - name: Install Rust 1.95
         shell: bash
         run: rustup toolchain install 1.95.0 --profile minimal --component clippy,rustfmt
-
-      - name: Install stable Rust for WDIO E2E
-        if: inputs.run_native_wdio && runner.os != 'macOS'
-        shell: bash
-        run: rustup toolchain install stable --profile minimal
 
       - name: Check formatting
         if: runner.os == 'Linux'
@@ -109,108 +85,11 @@ jobs:
         shell: bash
         run: |
           cargo +1.95.0 clippy --locked --all-targets --all-features -- -D warnings -D rust-2024-compatibility
-          cargo +1.95.0 clippy --locked --manifest-path examples/tauri-app/src-tauri/Cargo.toml --all-targets --no-default-features -- -D warnings -D rust-2024-compatibility
 
       - name: Run Rust tests
         shell: bash
         run: |
           cargo +1.95.0 test --locked --all-features
-          cargo +1.95.0 test --locked --manifest-path examples/tauri-app/src-tauri/Cargo.toml
-
-      - name: Install pnpm
-        if: inputs.run_native_wdio && runner.os != 'macOS'
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-
-      - name: Install Node.js
-        if: inputs.run_native_wdio && runner.os != 'macOS'
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: "24"
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install frozen E2E dependencies
-        if: inputs.run_native_wdio && runner.os != 'macOS'
-        shell: bash
-        run: |
-          expected_pnpm="$(node -p "const value=require('./package.json').packageManager; const match=value.match(/^pnpm@([^+]+)/); match ? match[1] : ''")"
-          test -n "$expected_pnpm"
-          test "$(pnpm --version)" = "$expected_pnpm"
-          pnpm install --frozen-lockfile
-
-      - name: Verify Linux native WDIO prerequisites
-        if: inputs.run_native_wdio && runner.os == 'Linux'
-        shell: bash
-        run: |
-          command -v weston
-          pkg-config --atleast-version=3.24 gtk+-3.0
-          pkg-config --exists webkit2gtk-4.1
-
-      - name: Verify Windows native WDIO prerequisites
-        if: inputs.run_native_wdio && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $runtime = Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft\EdgeWebView\Application\*\msedgewebview2.exe" -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-          if ($null -eq $runtime) {
-            throw "Microsoft Edge WebView2 Runtime is unavailable"
-          }
-          Write-Output "Using WebView2 Runtime $($runtime.VersionInfo.ProductVersion)"
-
-      - name: Build the native E2E application
-        if: inputs.run_native_wdio && runner.os != 'macOS'
-        shell: bash
-        env:
-          RUSTUP_TOOLCHAIN: stable
-        run: pnpm example:e2e:build
-
-      - name: Validate the native E2E launcher
-        if: inputs.run_native_wdio && runner.os != 'macOS'
-        shell: bash
-        run: pnpm test:e2e:launcher
-
-      - name: Run native E2E scenarios
-        if: inputs.run_native_wdio && runner.os == 'Windows'
-        shell: bash
-        env:
-          TAURI_E2E_INCLUDE_NAVIGATION_STRESS: "1"
-        run: pnpm test:e2e:native
-
-      - name: Run native E2E scenarios under headless Wayland
-        if: inputs.run_native_wdio && runner.os == 'Linux'
-        shell: bash
-        run: |
-          export XDG_RUNTIME_DIR="$RUNNER_TEMP/decoration-wayland-runtime"
-          export WAYLAND_DISPLAY="wayland-decoration-e2e"
-          export GDK_BACKEND="wayland"
-          mkdir -p "$XDG_RUNTIME_DIR"
-          chmod 700 "$XDG_RUNTIME_DIR"
-          weston \
-            --backend=headless-backend.so \
-            --renderer=pixman \
-            --socket="$WAYLAND_DISPLAY" \
-            --idle-time=0 \
-            --log="$RUNNER_TEMP/weston.log" &
-          weston_pid=$!
-          trap 'kill "$weston_pid" 2>/dev/null || true; wait "$weston_pid" 2>/dev/null || true' EXIT
-          for _ in $(seq 1 100); do
-            test -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" && break
-            sleep 0.1
-          done
-          test -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"
-          pnpm test:e2e:native
-
-      - name: Retain native E2E evidence and compositor log
-        if: inputs.run_native_wdio && runner.os != 'macOS' && always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: native-e2e-evidence-${{ matrix.os }}
-          path: |
-            e2e/artifacts/checkpoint/native/**
-            e2e/artifacts/failure/native/**
-            e2e/artifacts/service/native/**
-            ${{ runner.temp }}/weston.log
-          if-no-files-found: warn
 
       - name: Build documentation
         if: runner.os == 'Linux'
@@ -265,7 +144,6 @@ jobs:
         shell: bash
         run: |
           cargo audit
-          (cd examples/tauri-app/src-tauri && cargo audit)
 
   package:
     name: Verify crate package

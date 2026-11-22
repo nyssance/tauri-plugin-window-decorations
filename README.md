@@ -120,20 +120,6 @@ const mode = await invoke<"custom" | "native">("activate_and_show");
 The command waits for frontend and native setup before showing the window. If
 activation fails, it restores and reveals the native titlebar instead.
 
-## Try the example
-
-The example application contains the complete configuration, titlebar, and
-fallback path:
-
-```sh
-pnpm install --frozen-lockfile
-pnpm --filter tauri-app build
-pnpm example:dev
-```
-
-Node 24 and pnpm 11.18 are required to run the repository example. They are not
-runtime dependencies of applications that use the crate.
-
 ## Limitations
 
 - The plugin decorates the native window's primary, same-label webview. Remote
@@ -154,7 +140,4 @@ runtime dependencies of applications that use the crate.
 - [Platform support](docs/platforms.md): native behavior, architecture coverage,
   and platform-specific limits
 - [Migration guide](docs/migration.md): upgrading from 2.x and early 3.0 releases
-- [Development guide](docs/development.md): repository setup, tests, native E2E,
-  and package checks
-- [Example application](https://github.com/nyssance/tauri-plugin-window-decorations/tree/main/examples/tauri-app):
-  a runnable integration
+- [Development guide](docs/development.md): repository setup, tests, and package checks

@@ -11,8 +11,5 @@ package-lock.json
 /target
 node_modules/
 /.pnpm-store/
-/examples/tauri-app/src-tauri/gen/
 
 dist
-dist-e2e
-/e2e/artifacts/

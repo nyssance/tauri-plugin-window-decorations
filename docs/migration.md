@@ -194,5 +194,3 @@ Check the application itself before release:
 - Linux is exercised on each Wayland compositor the application intends to
   support.
 
-The [example application](https://github.com/oovz/tauri-plugin-window-decorations/tree/main/examples/tauri-app)
-contains the complete current setup.

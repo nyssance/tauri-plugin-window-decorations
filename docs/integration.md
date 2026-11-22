@@ -4,7 +4,7 @@ This guide shows the supported application setup for
 `tauri-plugin-window-decorations` 3.0.5. It assumes Tauri 3 or later and Rust 1.95
 or later.
 
-The example uses one window named `main`. Repeat the capability and activation
+The snippets use one window named `main`. Repeat the capability and activation
 steps for each native window that needs custom decoration.
 
 ## 1. Install and register the plugin
