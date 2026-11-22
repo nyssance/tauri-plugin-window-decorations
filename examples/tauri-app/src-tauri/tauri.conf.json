@@ -1,0 +1,50 @@
+{
+  "productName": "tauri-app",
+  "version": "0.0.0",
+  "identifier": "com.tauritempplugin.dev",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "security": {
+      "capabilities": ["default"],
+      "csp": {
+        "default-src": "'self' customprotocol: asset:",
+        "connect-src": "ipc: http://ipc.localhost",
+        "img-src": "'self' asset: http://asset.localhost data:",
+        "style-src": "'self' tauri-plugin-window-decorations: http://tauri-plugin-window-decorations.localhost https://tauri-plugin-window-decorations.localhost",
+        "style-src-elem": "'self' tauri-plugin-window-decorations: http://tauri-plugin-window-decorations.localhost https://tauri-plugin-window-decorations.localhost"
+      },
+      "devCsp": null
+    },
+    "windows": [
+      {
+        "label": "main",
+        "fullscreen": false,
+        "resizable": true,
+        "title": "Decoration Demo",
+        "width": 800,
+        "height": 500,
+        "decorations": true,
+        "visible": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

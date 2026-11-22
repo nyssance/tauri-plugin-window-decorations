@@ -1,0 +1,21 @@
+{
+  "name": "tauri-plugin-window-decorations-workspace",
+  "private": true,
+  "description": "Workspace tooling for the Tauri 2 decoration plugin and example.",
+  "scripts": {
+    "example:dev": "pnpm --filter tauri-app tauri dev",
+    "example:build": "pnpm --filter tauri-app tauri build",
+    "example:e2e:build": "pnpm --filter tauri-app e2e:build",
+    "test:frontend": "node --test tests/frontend/*.test.mjs",
+    "typecheck:e2e": "pnpm --filter decoration-e2e typecheck",
+    "test:e2e:launcher": "pnpm --filter decoration-e2e test:launcher",
+    "test:e2e:browser": "pnpm --filter decoration-e2e test:browser",
+    "test:e2e:native": "pnpm --filter decoration-e2e test:native",
+    "test:e2e:native:runner": "pnpm --filter decoration-e2e test:native:runner"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": "11.18.0"
+  },
+  "packageManager": "pnpm@11.18.0+sha512.33d83c77da82f49fba836925c6f1b841181ec3132b670639bd012f7075f5c7cf634c5f870147c19aae7478fac01df09d8892e880454896edd23ee9b33757563c"
+}

@@ -1,0 +1,22 @@
+{
+  "productName": "tauri-app-e2e",
+  "identifier": "com.tauritempplugin.e2e",
+  "build": {
+    "beforeBuildCommand": "pnpm build:e2e-frontend",
+    "frontendDist": "../dist-e2e"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "security": {
+      "capabilities": [
+        "default",
+        {
+          "identifier": "e2e",
+          "description": "Dedicated capability for WebdriverIO end-to-end testing",
+          "windows": ["main"],
+          "permissions": ["wdio:default", "wdio-webdriver:default"]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "decoration-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:launcher": "tsx ./launcher-smoke.ts",
+    "test:browser": "wdio run ./wdio.browser.conf.ts",
+    "test:native": "node ./run-native.mjs",
+    "test:native:runner": "node --test ./run-native.test.mjs"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": "11.18.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.10",
+    "@wdio/cli": "^9.0.0",
+    "@wdio/globals": "^9.0.0",
+    "@wdio/local-runner": "^9.0.0",
+    "@wdio/mocha-framework": "^9.0.0",
+    "@wdio/spec-reporter": "^9.0.0",
+    "@wdio/tauri-service": "^1.2.0",
+    "@wdio/types": "^9.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,13 @@
+packages:
+  - "examples/tauri-app"
+  - "e2e"
+overrides:
+  'mocha@10.8.2>serialize-javascript': "^7.0.5"
+  # @wdio/tauri-service@1.2.0 imports this helper, which was omitted from
+  # @wdio/native-utils@2.4.0. The published 2.5.0 package restores it.
+  '@wdio/native-utils': 2.5.0
+allowBuilds:
+  '@swc/core': true
+  edgedriver: true
+  esbuild: false
+  geckodriver: true
