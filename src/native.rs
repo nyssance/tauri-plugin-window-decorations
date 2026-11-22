@@ -26,15 +26,9 @@ pub(crate) fn restore_frame<R: Runtime>(window: &WebviewWindow<R>) -> Result<(),
     window.set_decorations(true)
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub(crate) fn restore_frame<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), Error> {
-    let visible = window.is_visible()?;
-    run_linux_restoration(
-        visible,
-        || window.hide(),
-        || window.set_decorations(true),
-        || window.show(),
-    )
+    window.set_decorations(true)
 }
 
 #[cfg(target_os = "windows")]
@@ -47,7 +41,7 @@ pub(crate) fn cleanup_helpers<R: Runtime>(window: &WebviewWindow<R>) -> Result<(
     crate::traffic::deactivate(window)
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub(crate) fn cleanup_helpers<R: Runtime>(_window: &WebviewWindow<R>) -> Result<(), Error> {
     Ok(())
 }
@@ -89,16 +83,16 @@ pub(crate) fn apply_decorations<R: Runtime>(
         .map_err(|error| DecorationError::native_apply(error.to_string()))
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub(crate) fn apply_decorations<R: Runtime>(
     window: &WebviewWindow<R>,
     target: FrontendTarget,
     _snap_geometry: Option<SnapGeometryUpdate>,
 ) -> Result<(), DecorationError> {
-    prepared_policy(window, target)?;
-    window
-        .set_decorations(false)
-        .map_err(|error| DecorationError::native_apply(error.to_string()))
+    let _ = (window, target);
+    Err(DecorationError::unsupported_platform(
+        "window decorations are supported only on Windows and macOS",
+    ))
 }
 
 #[cfg(any(target_os = "linux", test))]

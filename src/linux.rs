@@ -1,13 +1,6 @@
-use crate::frontend::ControlLayout;
+use crate::frontend::{ControlLayout, FrontendOptions};
+use crate::DecorationError;
 use std::collections::HashSet;
-
-#[cfg(target_os = "linux")]
-use crate::{frontend::FrontendOptions, DecorationError};
-#[cfg(target_os = "linux")]
-use base64::{engine::general_purpose::STANDARD, Engine as _};
-#[cfg(target_os = "linux")]
-use gtk::prelude::*;
-#[cfg(target_os = "linux")]
 use tauri::{Runtime, WebviewWindow};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -67,86 +60,34 @@ pub(crate) fn parse_decoration_layout(
     Ok(ControlLayout { left, right })
 }
 
-#[cfg(target_os = "linux")]
-const ICON_CANDIDATES: [(&str, &[&str]); 4] = [
-    ("minimize", &["window-minimize-symbolic", "window-minimize"]),
-    ("maximize", &["window-maximize-symbolic", "window-maximize"]),
-    ("restore", &["window-restore-symbolic", "window-restore"]),
-    ("close", &["window-close-symbolic", "window-close"]),
-];
-
-#[cfg(target_os = "linux")]
-fn load_icon_data_url(
-    theme: &gtk::IconTheme,
-    style_context: &gtk::StyleContext,
-    candidates: &[&str],
-    scale: i32,
-) -> Option<String> {
-    for candidate in candidates {
-        let Some(icon) =
-            theme.lookup_icon_for_scale(candidate, 16, scale, gtk::IconLookupFlags::FORCE_SIZE)
-        else {
-            continue;
-        };
-        let Ok((pixbuf, _was_symbolic)) = icon.load_symbolic_for_context(style_context) else {
-            continue;
-        };
-        let Ok(png) = pixbuf.save_to_bufferv("png", &[]) else {
-            continue;
-        };
-        return Some(format!("data:image/png;base64,{}", STANDARD.encode(png)));
-    }
-    None
-}
-
-#[cfg(target_os = "linux")]
 pub(crate) fn frontend_options<R: Runtime>(
     window: &WebviewWindow<R>,
 ) -> Result<FrontendOptions, DecorationError> {
-    let gtk_window = window
-        .gtk_window()
-        .map_err(|error| DecorationError::native_apply(error.to_string()))?;
-    let display = gtk_window.display();
-    let display_type = display.type_();
-    backend_from_type_name(display_type.name()).map_err(DecorationError::unsupported_platform)?;
-
-    let mut controls = vec!["minimize"];
-    if gtk_window.is_resizable() {
+    let mut controls = Vec::new();
+    if window
+        .is_minimizable()
+        .map_err(|error| DecorationError::native_apply(error.to_string()))?
+    {
+        controls.push("minimize");
+    }
+    if window
+        .is_maximizable()
+        .map_err(|error| DecorationError::native_apply(error.to_string()))?
+        && window
+            .is_resizable()
+            .map_err(|error| DecorationError::native_apply(error.to_string()))?
+    {
         controls.push("maximize");
     }
-    if gtk_window.is_deletable() {
+    if window
+        .is_closable()
+        .map_err(|error| DecorationError::native_apply(error.to_string()))?
+    {
         controls.push("close");
-    }
-
-    let screen = gtk::prelude::GtkWindowExt::screen(&gtk_window)
-        .ok_or_else(|| DecorationError::native_apply("GTK window has no associated screen"))?;
-    let settings = gtk::Settings::for_screen(&screen)
-        .ok_or_else(|| DecorationError::native_apply("GTK screen has no effective settings"))?;
-    let configured_layout = settings.gtk_decoration_layout();
-    let layout = parse_decoration_layout(configured_layout.as_deref(), &controls)
-        .map_err(DecorationError::native_apply)?;
-    let controls: Vec<&'static str> = layout
-        .left
-        .iter()
-        .chain(layout.right.iter())
-        .copied()
-        .collect();
-
-    let mut icons = std::collections::BTreeMap::new();
-    if let Some(theme) = gtk::IconTheme::for_screen(&screen) {
-        let scale = bounded_scale(gtk_window.scale_factor());
-        let style_context = gtk_window.style_context();
-        for (control, candidates) in ICON_CANDIDATES {
-            if let Some(data_url) = load_icon_data_url(&theme, &style_context, candidates, scale) {
-                icons.insert(control, data_url);
-            }
-        }
     }
 
     Ok(FrontendOptions {
         controls,
-        icons,
-        layout: Some(layout),
         ..FrontendOptions::default()
     })
 }

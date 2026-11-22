@@ -1,6 +1,6 @@
 [package]
 name = "tauri-plugin-window-decorations"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["nyssance"]
 description = "Native window controls, custom decorations, and Windows 11 Snap Layout for Tauri 3 desktop apps."
 edition = "2021"
@@ -58,10 +58,6 @@ windows-sys = { version = "0.61", features = [
     "Win32_UI_WindowsAndMessaging",
 ] }
 raw-window-handle = "0.6"
-
-[target.'cfg(target_os = "linux")'.dependencies]
-base64 = "=0.22.1"
-gtk = { version = "=0.18.2", features = ["v3_24"] }
 
 [build-dependencies]
 tauri-plugin = { version = "3.0.0-alpha.1", features = ["build"] }

@@ -19,8 +19,6 @@ use crate::{
         RecoveryRequest,
     },
 };
-#[cfg(target_os = "linux")]
-use gtk::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt,
@@ -45,9 +43,6 @@ mod protocol;
 
 #[cfg(target_os = "macos")]
 mod traffic;
-
-#[cfg(any(target_os = "linux", test))]
-mod linux;
 
 #[cfg(target_os = "windows")]
 mod snap;
@@ -446,7 +441,7 @@ fn platform() -> Platform {
     Platform::Windows
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn platform() -> Platform {
     Platform::Linux
 }
@@ -480,18 +475,13 @@ fn frontend_options<R: Runtime>(
     Ok(FrontendOptions::default())
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn frontend_options<R: Runtime>(
-    window: &WebviewWindow<R>,
+    _window: &WebviewWindow<R>,
 ) -> Result<FrontendOptions, DecorationError> {
-    let mut options = linux::frontend_options(window)?;
-    options.fullscreen = window
-        .is_fullscreen()
-        .map_err(|error| DecorationError::native_apply(error.to_string()))?;
-    options.maximized = window
-        .is_maximized()
-        .map_err(|error| DecorationError::native_apply(error.to_string()))?;
-    Ok(options)
+    Err(DecorationError::unsupported_platform(
+        "window decorations are supported only on Windows and macOS",
+    ))
 }
 
 fn evaluate_document_preparation<R: Runtime>(
@@ -1462,17 +1452,6 @@ fn window_control_on_main<R: Runtime>(
                         "the requested window control is not authorized",
                     ));
                 }
-                #[cfg(target_os = "linux")]
-                if !window
-                    .gtk_window()
-                    .map_err(|error| DecorationError::native_apply(error.to_string()))?
-                    .is_resizable()
-                {
-                    return Err(deny_action(
-                        window,
-                        "the requested window control is not authorized",
-                    ));
-                }
                 window.maximize()
             }
         }
@@ -1487,17 +1466,6 @@ fn window_control_on_main<R: Runtime>(
             if !window
                 .is_closable()
                 .map_err(|error| DecorationError::native_apply(error.to_string()))?
-            {
-                return Err(deny_action(
-                    window,
-                    "the requested window control is not authorized",
-                ));
-            }
-            #[cfg(target_os = "linux")]
-            if !window
-                .gtk_window()
-                .map_err(|error| DecorationError::native_apply(error.to_string()))?
-                .is_deletable()
             {
                 return Err(deny_action(
                     window,
