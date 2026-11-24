@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { describe, it } from "node:test";
+import { describe, it, onTestFinished } from "bun:test";
 import { fileURLToPath } from "node:url";
 import { createDomWindow, spy } from "./dom-harness.mjs";
 
@@ -1584,7 +1584,7 @@ describe("embedded decoration runtime", () => {
     );
   });
 
-  it("preserves geometry retry backoff across layout churn and resize publications", async (t) => {
+  it("preserves geometry retry backoff across layout churn and resize publications", async () => {
     const fakeTimers = createFakeTimers();
     let geometryCalls = 0;
     const harness = createHarness({
@@ -1597,7 +1597,7 @@ describe("embedded decoration runtime", () => {
       },
     });
 
-    t.after(() => {
+    onTestFinished(() => {
       harness.window.__TAURI_PLUGIN_DECORATION__.cancel("7", "142");
     });
 
@@ -1629,7 +1629,7 @@ describe("embedded decoration runtime", () => {
     );
   });
 
-  it("prioritizes the Snap safety fallback when layout churn crosses the retry threshold in flight", async (t) => {
+  it("prioritizes the Snap safety fallback when layout churn crosses the retry threshold in flight", async () => {
     const timers = new Map();
     let nextTimerId = 1;
     const setTimeoutImpl = (callback, delay) => {
@@ -1670,7 +1670,7 @@ describe("embedded decoration runtime", () => {
       },
     });
 
-    t.after(() => {
+    onTestFinished(() => {
       harness.window.__TAURI_PLUGIN_DECORATION__.cancel("7", "143");
     });
 

@@ -5,14 +5,8 @@ Application developers normally need only the [integration guide](integration.md
 
 ## Toolchain
 
-Install Rust 1.95 or later, Node.js 24, pnpm 11.18.0, and the platform
-prerequisites required by Tauri.
-
-Install the private workspace tooling without changing the lockfile:
-
-```sh
-pnpm install --frozen-lockfile
-```
+Install Rust 1.95 or later, Bun, and the platform prerequisites required by
+Tauri. The frontend tests have no dependencies to install.
 
 ## Repository layout
 
@@ -34,8 +28,8 @@ your Tauri application.
 cargo fmt --all -- --check
 cargo clippy --locked --all-targets --all-features -- -D warnings -D rust-2024-compatibility
 cargo test --locked --all-features
-pnpm test:frontend
+bun run test:frontend
 ```
 
-The lockfiles are part of the validation contract. Keep `--locked` or
-`--frozen-lockfile` in reproducible checks.
+`Cargo.lock` is part of the validation contract. Keep `--locked` in
+reproducible checks.
