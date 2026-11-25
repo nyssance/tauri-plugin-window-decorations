@@ -70,7 +70,7 @@ after the current document and platform controls are ready.
 
 ## 3. Add the capability
 
-Add `decoration:default` to the capability that covers the decorated window.
+Add `window-decorations:default` to the capability that covers the decorated window.
 Application-owned drag regions also need the two Tauri window permissions shown
 below.
 
@@ -81,7 +81,7 @@ below.
   "description": "Capability for the main application window",
   "windows": ["main"],
   "permissions": [
-    "decoration:default",
+    "window-decorations:default",
     "core:window:allow-start-dragging",
     "core:window:allow-internal-toggle-maximize"
   ]

@@ -88,7 +88,7 @@ Grant the plugin and Tauri's drag-region permissions to the same window:
   "identifier": "default",
   "windows": ["main"],
   "permissions": [
-    "decoration:default",
+    "window-decorations:default",
     "core:window:allow-start-dragging",
     "core:window:allow-internal-toggle-maximize"
   ]

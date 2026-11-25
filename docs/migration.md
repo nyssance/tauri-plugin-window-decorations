@@ -71,7 +71,7 @@ Replace the old plugin-related permissions with:
   "identifier": "default",
   "windows": ["main"],
   "permissions": [
-    "decoration:default",
+    "window-decorations:default",
     "core:window:allow-start-dragging",
     "core:window:allow-internal-toggle-maximize"
   ]
